@@ -109,7 +109,7 @@ hey_llama_cpp_adapter_init(hey_llama_context_t* context, void* mem) {
 	return (hey_llm_t){
 		.ctx = adapter,
 		.vocab_size = llama_n_vocab(model),
-		.context_size = llama_n_ctx(context),
+		.context_size = llama_n_ctx_train(model),
 		.bos = llama_token_bos(model),
 		.eos = llama_token_eos(model),
 		.nl = llama_token_nl(model),
