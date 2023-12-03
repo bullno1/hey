@@ -203,6 +203,9 @@ hey_malloc(hey_exec_t* ctx, size_t size);
 HEY_API hey_sampler_t
 hey_set_sampler(hey_exec_t* ctx, hey_sampler_t sampler);
 
+HEY_API hey_logit_processor_t
+hey_set_logit_processor(hey_exec_t* ctx, hey_logit_processor_t processor);
+
 HEY_API void
 hey_generate(hey_exec_t* ctx, hey_generate_options_t options);
 
@@ -247,6 +250,7 @@ typedef struct hey_arena_s {
 struct hey_exec_s {
 	hey_t* owner;
 	hey_sampler_t sampler;
+	hey_logit_processor_t logit_processor;
 	hey_index_t sync_index;
 	hey_state_t state;
 };
@@ -472,6 +476,9 @@ hey_execute(hey_t* hey, hey_fn_t fn, void* userdata) {
 		.sampler = {
 			.fn = &hey_sample_argmax,
 		},
+		.logit_processor = {
+			.fn = &hey_logit_processor_noop,
+		},
 		.state = {
 			.tokens = hey->tokens,
 			.token_spans = hey->token_spans,
@@ -566,6 +573,13 @@ hey_set_sampler(hey_exec_t* ctx, hey_sampler_t sampler) {
 	return old_sampler;
 }
 
+hey_logit_processor_t
+hey_set_logit_processor(hey_exec_t* ctx, hey_logit_processor_t processor) {
+	hey_logit_processor_t old_processor = ctx->logit_processor;
+	ctx->logit_processor = processor;
+	return old_processor;
+}
+
 hey_str_t
 hey_str_from_cstr(const char* str) {
 	return (hey_str_t){
@@ -646,7 +660,12 @@ hey_generate(hey_exec_t* ctx, hey_generate_options_t options) {
 			}
 		}
 
+		// Generation processor
 		options.logit_processor.fn(logits, vocab_size, ctx, options.logit_processor.userdata);
+
+		// Global processor
+		ctx->logit_processor.fn(logits, vocab_size, ctx, ctx->logit_processor.userdata);
+
 		hey_token_t chosen_token = sampler.fn(logits, vocab_size, ctx, sampler.userdata);
 		HEY_ASSERT(ctx->state.num_tokens < llm->context_size, "Context overflow");
 		tokens[ctx->state.num_tokens] = chosen_token;
