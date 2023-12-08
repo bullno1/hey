@@ -66,7 +66,7 @@
 #include <math.h>
 
 #ifndef HEY_ARENA_CHUNK_SIZE
-#define HEY_ARENA_CHUNK_SIZE 4096
+#define HEY_ARENA_CHUNK_SIZE (2 * 1024 * 1024)
 #endif
 
 #define HEY_MAX(A, B) ((A) > (B) ? (A) : (B))
@@ -355,13 +355,20 @@ HEY_PRIVATE void
 hey_arena_reset(hey_arena_t* arena) {
 	hey_arena_chunk_t* itr = arena->current_chunk;
 
-	do {
+	while (itr->next != NULL) {
 		hey_arena_chunk_t* next = itr->next;
-		itr->current = itr->begin;
-		itr->next = arena->free_chunks;
-		arena->free_chunks = itr;
+
+		if ((itr->end - itr->begin) > arena->chunk_size) {
+			// Oversized alloc
+			HEY_FREE(arena->ctx, itr);
+		} else {
+			itr->current = itr->begin;
+			itr->next = arena->free_chunks;
+			arena->free_chunks = itr;
+		}
+
 		itr = next;
-	} while (itr->next != NULL);
+	}
 
 	itr->current = itr->begin;
 	arena->current_chunk = itr;
