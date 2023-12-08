@@ -53,7 +53,14 @@ hey_ilog2(uint32_t x) {
 
 HEY_PRIVATE uint64_t
 hey_hash_token(hey_token_t token) {
-	return token; // TODO: actually hash
+	// https://lemire.me/blog/2018/08/15/fast-strongly-universal-64-bit-hashing-everywhere/
+	uint64_t h = token;
+	h ^= h >> 33;
+	h *= 0xff51afd7ed558ccdL;
+	h ^= h >> 33;
+	h *= 0xc4ceb9fe1a85ec53L;
+	h ^= h >> 33;
+	return h;
 }
 
 HEY_PRIVATE int32_t
@@ -118,12 +125,12 @@ hey_repetition_penalty_logit_processor(
 		hey_ring_buf_reset(state);
 	}
 
+	hey_index_t insert_index = state->insert_index;
 	for (hey_index_t i = previous_num_tokens; i < current_num_tokens; ++i) {
-		hey_index_t insert_index = state->insert_index;
 		hey_token_t new_token = hey_state->tokens[i];
 		hey_token_t old_token = state->recent_tokens[insert_index];
 		state->recent_tokens[insert_index] = new_token;
-		state->insert_index = (insert_index + 1) % state->size;
+		insert_index = (insert_index + 1) % state->size;
 
 		if (old_token >= 0) {
 			hey_index_t old_hash_slot = hey_msi_find_slot(
@@ -145,6 +152,7 @@ hey_repetition_penalty_logit_processor(
 		}
 	}
 	state->previous_num_tokens = current_num_tokens;
+	state->insert_index = insert_index;
 
 	hey_logit_t repetition_penalty = state->repetition_penalty;
 	hey_logit_t frequency_penalty = state->frequency_penalty;
@@ -186,7 +194,7 @@ hey_make_repetition_penalty_logit_processor(
 		.repetition_penalty = repetition_penalty,
 		.frequency_penalty = frequency_penalty,
 		.presence_penalty = presence_penalty,
-		.previous_num_tokens = hey_get_state(ctx)->num_tokens,
+		.previous_num_tokens = 0,
 		.hash_exp = hash_exp,
 		.recent_tokens = hey_malloc(ctx, sizeof(hey_token_t) * num_tokens),
 		.hash_keys = hey_malloc(ctx, sizeof(hey_token_t) * hash_size),
