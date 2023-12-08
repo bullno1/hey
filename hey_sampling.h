@@ -55,21 +55,20 @@ hey_softmax(const hey_logit_t* input, hey_token_t num_items, hey_logit_t* output
 }
 
 HEY_PRIVATE hey_token_t
-hey_sample_random(const hey_logit_t* logits, hey_token_t num_logits, hey_exec_t* ctx, void* userdata) {
-	hey_random_sampler_state_t* state = userdata;
-
-	hey_softmax(logits, num_logits, state->softmax);
-
+hey_sampling_pick_random(
+	const hey_logit_t* scores, hey_token_t num_logits,
+	hey_rand_state_t* rand_state
+) {
 	hey_logit_t sum = 0;
 	for (hey_token_t i = 0; i < num_logits; ++i) {
-		sum += state->softmax[i];
+		sum += scores[i];
 	}
 
 	hey_rand_out_t rnd = HEY_RAND_NEXT(&state->rand_state);
 	hey_logit_t threshold = ((hey_logit_t)rnd / (hey_logit_t)HEY_RAND_MAX) * sum;
 
 	for (hey_token_t i = 0; i < num_logits; ++i) {
-		threshold -= state->softmax[i];
+		threshold -= scores[i];
 
 		if (threshold <= 0) {
 			return i;
@@ -77,6 +76,18 @@ hey_sample_random(const hey_logit_t* logits, hey_token_t num_logits, hey_exec_t*
 	}
 
 	return 0;
+
+}
+
+HEY_PRIVATE hey_token_t
+hey_sample_random(
+	const hey_logit_t* logits, hey_token_t num_logits,
+	hey_exec_t* ctx,
+	void* userdata
+) {
+	hey_random_sampler_state_t* state = userdata;
+	hey_softmax(logits, num_logits, state->softmax);
+	return hey_sampling_pick_random(state->softmax, num_logits, state->rand_state);
 }
 
 hey_sampler_t
