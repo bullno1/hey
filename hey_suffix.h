@@ -18,9 +18,7 @@ hey_ends_at_token(hey_token_t token);
 
 #include <stdint.h>
 
-#define HEY_SUFFIX_PRIVATE static inline
-
-HEY_SUFFIX_PRIVATE hey_control_decision_t
+HEY_PRIVATE hey_control_decision_t
 hey_ends_at_suffix_controller(hey_index_t* count, hey_exec_t* ctx, void* userdata) {
 	const hey_str_t* suffix = userdata;
 	const hey_state_t* state = hey_get_state(ctx);
@@ -39,7 +37,7 @@ hey_ends_at_suffix_controller(hey_index_t* count, hey_exec_t* ctx, void* userdat
 	}
 }
 
-HEY_SUFFIX_PRIVATE hey_control_decision_t
+HEY_PRIVATE hey_control_decision_t
 hey_ends_at_isuffix_controller(hey_index_t* count, hey_exec_t* ctx, void* userdata) {
 	const hey_str_t* suffix = userdata;
 	const hey_state_t* state = hey_get_state(ctx);
@@ -58,7 +56,7 @@ hey_ends_at_isuffix_controller(hey_index_t* count, hey_exec_t* ctx, void* userda
 	}
 }
 
-HEY_SUFFIX_PRIVATE hey_control_decision_t
+HEY_PRIVATE hey_control_decision_t
 hey_ends_at_token_controller(hey_index_t* count, hey_exec_t* ctx, void* userdata) {
 	hey_token_t token = (hey_token_t)(uintptr_t)userdata;
 	const hey_state_t* state = hey_get_state(ctx);
