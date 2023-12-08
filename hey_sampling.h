@@ -6,7 +6,7 @@
 // The default implementation is just stdlib's rand which is not good.
 // There is only a single global state.
 // For a much better alternative, consider: https://github.com/mattiasgustavsson/libs/blob/main/docs/rnd.md
-#ifndef HEY_RAND
+#ifndef HEY_RAND_NEXT
 #include <stdlib.h>
 #define HEY_RAND_OUT_TYPE int
 #define HEY_RAND_STATE_TYPE char
@@ -64,7 +64,7 @@ hey_sampling_pick_random(
 		sum += scores[i];
 	}
 
-	hey_rand_out_t rnd = HEY_RAND_NEXT(&state->rand_state);
+	hey_rand_out_t rnd = HEY_RAND_NEXT(state->rand_state);
 	hey_logit_t threshold = ((hey_logit_t)rnd / (hey_logit_t)HEY_RAND_MAX) * sum;
 
 	for (hey_token_t i = 0; i < num_logits; ++i) {
