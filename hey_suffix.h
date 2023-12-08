@@ -14,7 +14,7 @@ hey_ends_at_token(hey_token_t token);
 
 #endif
 
-#ifdef HEY_SUFFIX_IMPLEMENTATION
+#ifdef HEY_IMPLEMENTATION
 
 #include <stdint.h>
 

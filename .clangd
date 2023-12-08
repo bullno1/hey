@@ -1,28 +1,8 @@
 ---
 If:
-  PathMatch: hey\.h
+  PathMatch: .*\.h
 CompileFlags:
   Add: [-DHEY_IMPLEMENTATION]
----
-If:
-  PathMatch: hey_choose\.h
-CompileFlags:
-  Add: [-DHEY_CHOOSE_IMPLEMENTATION]
----
-If:
-  PathMatch: hey_llama_cpp\.h
-CompileFlags:
-  Add: [-DHEY_LLAMA_CPP_IMPLEMENTATION]
----
-If:
-  PathMatch: hey_one_of\.h
-CompileFlags:
-  Add: [-DHEY_ONE_OF_IMPLEMENTATION]
----
-If:
-  PathMatch: hey_suffix\.h
-CompileFlags:
-  Add: [-DHEY_SUFFIX_IMPLEMENTATION]
 ---
 CompileFlags:
   Add: [-xc, -Wall, -Werror, -pedantic, -std=c11]

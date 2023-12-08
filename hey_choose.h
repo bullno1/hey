@@ -8,9 +8,7 @@ hey_choose(hey_exec_t* ctx, const hey_str_t options[]);
 
 #endif
 
-#ifdef HEY_CHOOSE_IMPLEMENTATION
-
-#define HEY_CHOOSE_PRIVATE static inline
+#ifdef HEY_IMPLEMENTATION
 
 typedef struct hey_choose_state_s {
 	hey_index_t choice;
@@ -19,7 +17,7 @@ typedef struct hey_choose_state_s {
 	const hey_str_t* options;
 } hey_choose_state_t;
 
-HEY_CHOOSE_PRIVATE hey_control_decision_t
+HEY_PRIVATE hey_control_decision_t
 hey_choose_controller(hey_index_t* count, hey_exec_t* ctx, void* userdata) {
 	hey_choose_state_t* choose_state = userdata;
 	const hey_state_t* hey_state = hey_get_state(ctx);
@@ -49,7 +47,7 @@ hey_choose_controller(hey_index_t* count, hey_exec_t* ctx, void* userdata) {
 	return HEY_CONTINUE;
 }
 
-HEY_CHOOSE_PRIVATE void
+HEY_PRIVATE void
 hey_choose_logit_processor(hey_logit_t* logits, hey_token_t num_logits, hey_exec_t* ctx, void* userdata) {
 	hey_choose_state_t* choose_state = userdata;
 	const hey_state_t* hey_state = hey_get_state(ctx);

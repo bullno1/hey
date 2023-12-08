@@ -8,11 +8,9 @@ hey_one_of(const hey_controller_t controllers[]);
 
 #endif
 
-#ifdef HEY_ONE_OF_IMPLEMENTATION
+#ifdef HEY_IMPLEMENTATION
 
-#define HEY_ONE_OF_PRIVATE static inline
-
-HEY_ONE_OF_PRIVATE hey_control_decision_t
+HEY_PRIVATE hey_control_decision_t
 hey_one_of_controller(hey_index_t* count, hey_exec_t* ctx, void* userdata) {
 	const hey_controller_t* controllers = userdata;
 

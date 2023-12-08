@@ -13,9 +13,7 @@ hey_llama_cpp_adapter_init(hey_llama_context_t* context, void* mem);
 
 #endif
 
-#ifdef HEY_LLAMA_CPP_IMPLEMENTATION
-
-#define HEY_LLAMA_CPP_PRIVATE static inline
+#ifdef HEY_IMPLEMENTATION
 
 // TODO: Proper include path
 #include "../llama.cpp/llama.h"
@@ -26,7 +24,7 @@ typedef struct hey_llama_cpp_adapter_s {
 	hey_token_t tokens[];
 } hey_llama_cpp_adapter_t;
 
-HEY_LLAMA_CPP_PRIVATE hey_index_t
+HEY_PRIVATE hey_index_t
 hey_llama_cpp_tokenize(
 	const char* text, hey_index_t num_chars,
 	hey_token_t* tokens, hey_index_t num_tokens,
@@ -46,7 +44,7 @@ hey_llama_cpp_tokenize(
 	return num_tokens_out >= 0 ? num_tokens_out : -num_tokens_out;
 }
 
-HEY_LLAMA_CPP_PRIVATE hey_index_t
+HEY_PRIVATE hey_index_t
 hey_llama_cpp_detokenize(
 	hey_token_t token,
 	char* text, hey_index_t num_chars,
@@ -63,7 +61,7 @@ hey_llama_cpp_detokenize(
 	return num_chars_out >= 0 ? num_chars_out : -num_chars_out;
 }
 
-HEY_LLAMA_CPP_PRIVATE void
+HEY_PRIVATE void
 hey_llama_cpp_eval(
 	hey_token_t* tokens, hey_index_t num_tokens,
 	hey_logit_t* logits,
@@ -98,7 +96,7 @@ hey_llama_cpp_adapter_size(hey_llama_context_t* context) {
 	return sizeof(hey_llama_cpp_adapter_t) + sizeof(hey_token_t) * llama_n_ctx(context);
 }
 
-HEY_API hey_llm_t
+hey_llm_t
 hey_llama_cpp_adapter_init(hey_llama_context_t* context, void* mem) {
 	const struct llama_model* model = llama_get_model(context);
 	hey_llama_cpp_adapter_t* adapter = mem;
