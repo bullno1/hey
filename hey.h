@@ -72,6 +72,8 @@
 #define HEY_MAX(A, B) ((A) > (B) ? (A) : (B))
 #define HEY_MIN(A, B) ((A) < (B) ? (A) : (B))
 #define HEY_LOGIT_IGNORE (-INFINITY)
+// It doesn't zero so it can't be called calloc
+#define HEY_ARRAY_ALLOC(CTX, TYPE, LEN) HEY_MALLOC(CTX, sizeof(TYPE) * LEN)
 
 #define HEY_STR(LITERAL) \
 	(hey_str_t){ .chars = LITERAL, .length = sizeof(LITERAL) }
@@ -91,6 +93,20 @@ typedef enum hey_control_decision_e {
 	HEY_STOP_AND_RETRACT_TOKENS = HEY_STOP,
 	HEY_STOP_AND_RETRACT_CHARACTERS,
 } hey_control_decision_t;
+
+typedef enum hey_event_type_e {
+	HEY_EVENT_NEW_TOKENS,
+	HEY_EVENT_EVAL_BEGIN,
+	HEY_EVENT_EVAL_END,
+	HEY_EVENT_SAMPLING_BEGIN,
+	HEY_EVENT_SAMPLING_END,
+	HEY_EVENT_REWIND,
+} hey_event_type_t;
+
+typedef enum hey_text_source_e {
+	HEY_SOURCE_USER,
+	HEY_SOURCE_LLM,
+} hey_text_source_t;
 
 typedef void(*hey_fn_t)(hey_exec_t* ctx, void* userdata);
 
@@ -155,20 +171,56 @@ typedef struct hey_var_s {
 	hey_span_t text;
 } hey_var_t;
 
+typedef struct hey_event_s {
+	hey_event_type_t type;
+
+	union {
+		struct {
+			const hey_token_t* tokens;
+			hey_index_t num_tokens;
+			hey_text_source_t source;
+		} new_tokens;
+
+		struct {
+			hey_var_t* capture;
+		} eval;
+
+		struct {
+			hey_index_t pos;
+		} rewind;
+	};
+} hey_event_t;
+
 typedef struct hey_logit_processor_s {
-	void (*fn)(hey_logit_t* logits, hey_token_t num_logits, hey_exec_t* ctx, void* userdata);
+	void (*fn)(
+		hey_logit_t* logits, hey_token_t num_logits,
+		hey_exec_t* ctx,
+		void* userdata
+	);
+
 	void* userdata;
 } hey_logit_processor_t;
 
 typedef struct hey_sampler_s {
-	hey_token_t (*fn)(const hey_logit_t* logits, hey_token_t num_logits, hey_exec_t* ctx, void* userdata);
+	hey_token_t (*fn)(
+		const hey_logit_t* logits, hey_token_t num_logits,
+		hey_exec_t* ctx,
+		void* userdata
+	);
+
 	void* userdata;
 } hey_sampler_t;
 
 typedef struct hey_controller_s {
 	hey_control_decision_t (*fn)(hey_index_t* count, hey_exec_t* ctx, void* userdata);
+
 	void* userdata;
 } hey_controller_t;
+
+typedef struct hey_watcher_s {
+	void (*fn)(const hey_event_t* event, hey_exec_t* ctx, void* userdata);
+	void* userdata;
+} hey_watcher_t;
 
 typedef struct hey_generate_options_s {
 	hey_logit_processor_t logit_processor;
@@ -199,6 +251,9 @@ hey_rewind(hey_exec_t* ctx, hey_index_t pos);
 
 HEY_API void*
 hey_malloc(hey_exec_t* ctx, size_t size);
+
+HEY_API hey_watcher_t
+hey_set_watcher(hey_exec_t* ctx, hey_watcher_t watcher);
 
 HEY_API hey_sampler_t
 hey_set_sampler(hey_exec_t* ctx, hey_sampler_t sampler);
@@ -251,6 +306,7 @@ struct hey_exec_s {
 	hey_t* owner;
 	hey_sampler_t sampler;
 	hey_logit_processor_t logit_processor;
+	hey_watcher_t watcher;
 	hey_index_t sync_index;
 	hey_state_t state;
 };
@@ -417,6 +473,10 @@ HEY_PRIVATE void
 hey_logit_processor_noop(hey_logit_t* logits, hey_token_t num_logits, hey_exec_t* ctx, void* userdata) {
 }
 
+HEY_PRIVATE void
+hey_watcher_noop(const hey_event_t* event, hey_exec_t* ctx, void* userdata) {
+}
+
 HEY_PRIVATE hey_control_decision_t
 hey_controller_fill_context(hey_index_t* count, hey_exec_t* ctx, void* userdata) {
 	const hey_state_t* state = hey_get_state(ctx);
@@ -439,15 +499,15 @@ hey_create(hey_options_t options) {
 	*hey = (hey_t){
 		.options = options,
 		.max_token_len = max_token_len,
-		.tokens = HEY_MALLOC(
-			options->memctx, sizeof(hey_token_t) * options.llm.context_size
+		.tokens = HEY_ARRAY_ALLOC(
+			options->memctx, hey_token_t, options.llm.context_size
 		),
-		.logits = HEY_MALLOC(options->memctx, sizeof(hey_logit_t) * options.llm.vocab_size),
+		.logits = HEY_ARRAY_ALLOC(options->memctx, hey_logit_t, options.llm.vocab_size),
 		.text = HEY_MALLOC(
 			options->memctx, max_token_len * options.llm.context_size
 		),
-		.token_spans = HEY_MALLOC(
-			options->memctx, sizeof(hey_span_t) * options.llm.context_size
+		.token_spans = HEY_ARRAY_ALLOC(
+			options->memctx, hey_span_t, options.llm.context_size
 		),
 		.tmp_str_buf = HEY_MALLOC(options->memctx, max_token_len),
 	};
@@ -478,6 +538,9 @@ hey_execute(hey_t* hey, hey_fn_t fn, void* userdata) {
 		},
 		.logit_processor = {
 			.fn = &hey_logit_processor_noop,
+		},
+		.watcher = {
+			.fn = &hey_watcher_noop,
 		},
 		.state = {
 			.tokens = hey->tokens,
@@ -536,6 +599,19 @@ hey_push_tokens(hey_exec_t* ctx, const hey_token_t* tokens, hey_index_t num_toke
 		num_tokens * sizeof(hey_token_t)
 	);
 	ctx->state.num_tokens += num_tokens;
+
+	ctx->watcher.fn(
+		&(hey_event_t){
+			.type = HEY_EVENT_NEW_TOKENS,
+			.new_tokens = {
+				.tokens = tokens,
+				.num_tokens = num_tokens,
+				.source = HEY_SOURCE_USER,
+			},
+		},
+		ctx,
+		ctx->watcher.userdata
+	);
 }
 
 void
@@ -564,6 +640,15 @@ hey_rewind(hey_exec_t* ctx, hey_index_t pos) {
 	ctx->state.num_chars = ctx->state.token_spans[pos].begin;
 	ctx->state.num_tokens = pos;
 	ctx->sync_index = pos;
+
+	ctx->watcher.fn(
+		&(hey_event_t){
+			.type = HEY_EVENT_REWIND,
+			.rewind = { .pos = pos, },
+		},
+		ctx,
+		ctx->watcher.userdata
+	);
 }
 
 hey_sampler_t
@@ -578,6 +663,13 @@ hey_set_logit_processor(hey_exec_t* ctx, hey_logit_processor_t processor) {
 	hey_logit_processor_t old_processor = ctx->logit_processor;
 	ctx->logit_processor = processor;
 	return old_processor;
+}
+
+hey_watcher_t
+hey_set_watcher(hey_exec_t* ctx, hey_watcher_t watcher) {
+	hey_watcher_t old_watcher = ctx->watcher;
+	ctx->watcher = watcher;
+	return old_watcher;
 }
 
 hey_str_t
@@ -639,12 +731,31 @@ hey_generate(hey_exec_t* ctx, hey_generate_options_t options) {
 	hey_logit_t* logits = hey->logits;
 	hey_token_t* tokens = hey->tokens;
 	hey_sampler_t sampler = ctx->sampler;
+	hey_watcher_t watcher = ctx->watcher;
 	hey_token_t vocab_size = llm->vocab_size;
 	char* tmp_str_buf = hey->tmp_str_buf;
 
 	hey_control_decision_t decision;
 	do {
+		watcher.fn(
+			&(hey_event_t){
+				.type = HEY_EVENT_EVAL_BEGIN,
+				.eval = { .capture = options.capture_into },
+			},
+			ctx,
+			watcher.userdata
+		);
 		llm->eval(tokens, ctx->state.num_tokens, logits, llm->ctx);
+		watcher.fn(
+			&(hey_event_t){
+				.type = HEY_EVENT_EVAL_END,
+				.eval = { .capture = options.capture_into },
+			},
+			ctx,
+			watcher.userdata
+		);
+
+		watcher.fn(&(hey_event_t){ .type = HEY_EVENT_SAMPLING_BEGIN }, ctx, watcher.userdata);
 
 		// Filter tokens for healing
 		if (ctx->state.healing_prefix.length > 0) {
@@ -667,9 +778,23 @@ hey_generate(hey_exec_t* ctx, hey_generate_options_t options) {
 		ctx->logit_processor.fn(logits, vocab_size, ctx, ctx->logit_processor.userdata);
 
 		hey_token_t chosen_token = sampler.fn(logits, vocab_size, ctx, sampler.userdata);
+		watcher.fn(&(hey_event_t){ .type = HEY_EVENT_SAMPLING_END }, ctx, watcher.userdata);
+
 		HEY_ASSERT(ctx->state.num_tokens < llm->context_size, "Context overflow");
 		tokens[ctx->state.num_tokens] = chosen_token;
 		ctx->state.num_tokens += 1;
+		watcher.fn(
+			&(hey_event_t){
+				.type = HEY_EVENT_NEW_TOKENS,
+				.new_tokens = {
+					.tokens = &chosen_token,
+					.num_tokens = 1,
+					.source = HEY_SOURCE_LLM,
+				},
+			},
+			ctx,
+			watcher.userdata
+		);
 
 		// Reduce the healing prefix by the new token
 		if (ctx->state.healing_prefix.length > 0) {
