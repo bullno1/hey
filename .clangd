@@ -2,7 +2,7 @@
 If:
   PathMatch: .*\.h
 CompileFlags:
-  Add: [-DHEY_IMPLEMENTATION]
+  Add: [-DHEY_IMPLEMENTATION, -Ideps/llama.cpp]
 ---
 CompileFlags:
-  Add: [-xc, -Wall, -Werror, -pedantic, -std=c11]
+  CompilationDatabase: .build

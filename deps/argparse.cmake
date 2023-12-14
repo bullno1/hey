@@ -1,0 +1,3 @@
+set(ARGPARSE_SHARED OFF CACHE BOOL "")
+set(ARGPARSE_STATIC ON CACHE BOOL "")
+add_subdirectory(argparse EXCLUDE_FROM_ALL)

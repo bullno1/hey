@@ -1,0 +1,6 @@
+[submodule "deps/llama.cpp"]
+	path = deps/llama.cpp
+	url = https://github.com/ggerganov/llama.cpp.git
+[submodule "deps/argparse"]
+	path = deps/argparse
+	url = https://github.com/cofyc/argparse.git
