@@ -13,7 +13,8 @@ hey_llama_cpp_adapter_init(hey_llama_context_t* context, void* mem);
 
 #endif
 
-#ifdef HEY_IMPLEMENTATION
+#if defined(HEY_IMPLEMENTATION) && !defined(HEY_LLAMA_CPP_IMPLEMENTATION)
+#define HEY_LLAMA_CPP_IMPLEMENTATION
 
 #include <llama.h>
 

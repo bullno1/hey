@@ -32,8 +32,10 @@ watcher(const hey_event_t* event, hey_exec_t* ctx, void* userdata) {
 			hey_str_t str = hey_detokenize(ctx, token);
 			str.chars += event->new_tokens.healing_offset;
 			str.length -= event->new_tokens.healing_offset;
-			fprintf(stdout, "%.*s", str.length, str.chars);
-			fflush(stdout);
+			if (str.length > 0) {
+				fprintf(stdout, "%.*s", str.length, str.chars);
+				fflush(stdout);
+			}
 		}
 	}
 }
@@ -45,9 +47,20 @@ generate(hey_exec_t* ctx, void* userdata) {
 
 	const hey_llm_t* llm = hey_get_llm(ctx);
 	hey_push_str(ctx, state->input, state->allow_special);
+
+	hey_var_t answer;
 	hey_generate(ctx, (hey_generate_options_t){
 		.controller = hey_ends_at_token(llm->eos),
+		.capture_into = &answer,
 	});
+
+	hey_str_t capture = hey_get_var(ctx, answer);
+	const hey_state_t* hey_state = hey_get_state(ctx);
+	reset_colors(stderr);
+	fprintf(stderr, "\n------------\n");
+	fprintf(stderr, "Context: |%.*s|\n", hey_state->num_chars, hey_state->text);
+	fprintf(stderr, "Capture span: [%d, %d)\n", answer.text.begin, answer.text.end);
+	fprintf(stderr, "Capture: |%.*s|", capture.length, capture.chars);
 }
 
 int
@@ -164,7 +177,6 @@ main(int argc, const char* argv[]) {
 		},
 	});
 	reset_colors(stdout);
-	fprintf(stdout, "\n");
 end:
 	if (hey != NULL) {
 		hey_destroy(hey);

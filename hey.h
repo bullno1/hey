@@ -275,6 +275,9 @@ HEY_API void
 hey_push_tokens(hey_exec_t* ctx, const hey_token_t* tokens, hey_index_t num_tokens);
 
 HEY_API hey_str_t
+hey_get_var(hey_exec_t* ctx, hey_var_t var);
+
+HEY_API hey_str_t
 hey_str_from_cstr(const char* str);
 
 HEY_API hey_str_t
@@ -729,6 +732,16 @@ hey_str_from_cstr(const char* str) {
 }
 
 hey_str_t
+hey_get_var(hey_exec_t* ctx, hey_var_t var) {
+	const hey_state_t* state = hey_get_state(ctx);
+
+	return (hey_str_t){
+		.chars = state->text + var.text.begin,
+		.length = var.text.end - var.text.begin,
+	};
+}
+
+hey_str_t
 hey_detokenize(hey_exec_t* ctx, hey_token_t token) {
 	hey_t* hey = ctx->owner;
 	const hey_llm_t* llm = &hey->options.llm;
@@ -773,8 +786,8 @@ hey_generate(hey_exec_t* ctx, hey_generate_options_t options) {
 		ctx->state.healing_prefix.length = last_token_span.end - last_token_span.begin;
 		ctx->state.num_tokens -= 1;
 		ctx->sync_index = ctx->state.num_tokens;
+		ctx->state.num_chars = last_token_span.begin;
 	}
-
 
 	hey_logit_t* logits = hey->logits;
 	hey_token_t* tokens = hey->tokens;
