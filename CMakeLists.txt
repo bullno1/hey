@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.15)
 project(hey)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -9,10 +9,6 @@ if (IPO_SUPPORTED)
 	set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_Release TRUE)
 	set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RelWithDebInfo TRUE)
 endif ()
-
-if (MSVC)
-	set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded")
-endif()
 
 # Add deps first
 add_subdirectory(deps)

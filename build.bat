@@ -12,6 +12,7 @@ mkdir .build
 cd .build
 cmake ^
     -G "Ninja" ^
+    -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded ^
     -DCMAKE_BUILD_TYPE=RelWithDebInfo ^
     ..
 cmake --build .
