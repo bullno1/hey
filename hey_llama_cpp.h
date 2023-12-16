@@ -15,8 +15,7 @@ hey_llama_cpp_adapter_init(hey_llama_context_t* context, void* mem);
 
 #ifdef HEY_IMPLEMENTATION
 
-// TODO: Proper include path
-#include "../llama.cpp/llama.h"
+#include <llama.h>
 
 typedef struct hey_llama_cpp_adapter_s {
 	struct llama_context* context;
