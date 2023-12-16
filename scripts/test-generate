@@ -1,0 +1,7 @@
+#!/bin/sh -e
+
+./build
+bin/generate \
+	--model=${HEY_MODEL_DIR:-~/Downloads}/zephyr-7b-beta.Q5_K_M.gguf \
+	--allow-special \
+	--input=examples/zephyr-generate.txt

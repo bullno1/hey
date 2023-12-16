@@ -147,7 +147,7 @@ main(int argc, const char* argv[]) {
 	} else {
 		input_file = fopen(input_path, "rb");
 		if (input_file == NULL) {
-			perror("Could not open file");
+			perror("Could not open input file");
 			exit_code = EXIT_FAILURE;
 			goto end;
 		}
