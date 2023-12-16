@@ -14,12 +14,15 @@ hey_ends_at_token(hey_token_t token);
 
 #endif
 
-#ifdef HEY_IMPLEMENTATION
+#if defined(HEY_IMPLEMENTATION) && !defined(HEY_SUFFIX_IMPLEMENTATION)
+#define HEY_SUFFIX_IMPLEMENTATION
 
 #include <stdint.h>
 
 HEY_PRIVATE hey_control_decision_t
 hey_ends_at_suffix_controller(hey_index_t* count, hey_exec_t* ctx, void* userdata) {
+	(void)count;
+
 	const hey_str_t* suffix = userdata;
 	const hey_state_t* state = hey_get_state(ctx);
 	if (state->num_chars < suffix->length) { return HEY_CONTINUE; }
@@ -39,6 +42,8 @@ hey_ends_at_suffix_controller(hey_index_t* count, hey_exec_t* ctx, void* userdat
 
 HEY_PRIVATE hey_control_decision_t
 hey_ends_at_isuffix_controller(hey_index_t* count, hey_exec_t* ctx, void* userdata) {
+	(void)count;
+
 	const hey_str_t* suffix = userdata;
 	const hey_state_t* state = hey_get_state(ctx);
 	if (state->num_chars < suffix->length) { return HEY_CONTINUE; }
@@ -58,6 +63,8 @@ hey_ends_at_isuffix_controller(hey_index_t* count, hey_exec_t* ctx, void* userda
 
 HEY_PRIVATE hey_control_decision_t
 hey_ends_at_token_controller(hey_index_t* count, hey_exec_t* ctx, void* userdata) {
+	(void)count;
+
 	hey_token_t token = (hey_token_t)(uintptr_t)userdata;
 	const hey_state_t* state = hey_get_state(ctx);
 

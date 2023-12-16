@@ -2,7 +2,6 @@
 #define HEY_RAND_H
 
 #include <stdint.h>
-#include <limits.h>
 #define RND_U32 uint32_t
 #define RND_U64 uint64_t
 #include "rnd.h"

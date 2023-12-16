@@ -12,6 +12,8 @@ main(int argc, const char* argv[]) {
 	int allow_special = false;
 	int exit_code = EXIT_SUCCESS;
 
+	llama_backend_init(false);
+
 	struct argparse_option options[] = {
 		OPT_HELP(),
 		{
@@ -117,5 +119,6 @@ end:
 		llama_free_model(model);
 	}
 
+	llama_backend_free();
 	return exit_code;
 }

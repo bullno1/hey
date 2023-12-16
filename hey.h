@@ -281,7 +281,8 @@ hey_detokenize(hey_exec_t* ctx, hey_token_t token);
 
 #endif
 
-#ifdef HEY_IMPLEMENTATION
+#if defined(HEY_IMPLEMENTATION) && !defined(HEY_MAIN_IMPLEMENTATION)
+#define HEY_MAIN_IMPLEMENTATION
 
 #include <math.h>
 #include <stdint.h>
@@ -331,7 +332,7 @@ hey_arena_alloc_chunk(hey_arena_t* arena, size_t min_size) {
 
 	if (
 		arena->free_chunks != NULL
-		&& arena->free_chunks->end - arena->free_chunks->begin >= min_size
+		&& arena->free_chunks->begin + min_size <= arena->free_chunks->end
 	) {
 		chunk = arena->free_chunks;
 		arena->free_chunks = chunk->next;
@@ -358,7 +359,7 @@ hey_arena_reset(hey_arena_t* arena) {
 	while (itr->next != NULL) {
 		hey_arena_chunk_t* next = itr->next;
 
-		if ((itr->end - itr->begin) > arena->chunk_size) {
+		if (itr->begin + arena->chunk_size < itr->end) {
 			// Oversized alloc
 			HEY_FREE(arena->ctx, itr);
 		} else {
@@ -437,12 +438,27 @@ hey_arena_alloc(hey_arena_t* arena, size_t size, size_t align) {
 
 HEY_PRIVATE hey_token_t
 hey_sample_argmax(const hey_logit_t* logits, hey_token_t num_logits, hey_exec_t* ctx, void* userdata) {
-	hey_token_t chosen_token = -1;
-	hey_logit_t score = HEY_LOGIT_IGNORE;
+	(void)ctx;
+	(void)userdata;
 
+	hey_logit_t max_score = HEY_LOGIT_IGNORE;
+	for (hey_token_t i = 0; i < num_logits; ++i) {
+		max_score = HEY_MAX(logits[i], max_score);
+	}
+
+	hey_logit_t sum = 0;
+	for (hey_token_t i = 0; i < num_logits; ++i) {
+		hey_logit_t p = exp(logits[i] - max_score);
+		sum += p;
+	}
+
+	hey_token_t chosen_token = -1;
+	hey_logit_t chosen_score = HEY_LOGIT_IGNORE;
 	for (hey_token_t token = 0; token < num_logits; ++token) {
-		if (logits[token] > score) {
-			score = logits[token];
+		hey_logit_t token_score = exp(logits[token] - max_score) / sum;
+
+		if (token_score > chosen_score) {
+			chosen_score = token_score;
 			chosen_token = token;
 		}
 	}
@@ -478,14 +494,24 @@ hey_sync_state(hey_exec_t* ctx) {
 
 HEY_PRIVATE void
 hey_logit_processor_noop(hey_logit_t* logits, hey_token_t num_logits, hey_exec_t* ctx, void* userdata) {
+	(void)logits;
+	(void)num_logits;
+	(void)ctx;
+	(void)userdata;
 }
 
 HEY_PRIVATE void
 hey_watcher_noop(const hey_event_t* event, hey_exec_t* ctx, void* userdata) {
+	(void)event;
+	(void)ctx;
+	(void)userdata;
 }
 
 HEY_PRIVATE hey_control_decision_t
 hey_controller_fill_context(hey_index_t* count, hey_exec_t* ctx, void* userdata) {
+	(void)count;
+	(void)userdata;
+
 	const hey_state_t* state = hey_get_state(ctx);
 	const hey_llm_t* llm = hey_get_llm(ctx);
 	return state->num_tokens >= llm->context_size ? HEY_STOP : HEY_CONTINUE;
@@ -580,16 +606,30 @@ void
 hey_push_str(hey_exec_t* ctx, hey_str_t string, bool allow_special) {
 	hey_t* hey = ctx->owner;
 
-	hey_token_t num_tokens_left = hey->options.llm.context_size - ctx->state.num_tokens;
-	hey_token_t num_tokens = hey->options.llm.tokenize(
+	hey_index_t num_tokens_left = hey->options.llm.context_size - ctx->state.num_tokens;
+	hey_token_t* new_tokens = hey->tokens + ctx->state.num_tokens;
+	hey_index_t num_tokens = hey->options.llm.tokenize(
 		string.chars, string.length,
-		hey->tokens + ctx->state.num_tokens, num_tokens_left,
+		new_tokens, num_tokens_left,
 		allow_special,
 		hey->options.llm.ctx
 	);
 
 	HEY_ASSERT(num_tokens <= num_tokens_left, "Context overflow");
 	ctx->state.num_tokens += num_tokens;
+
+	ctx->watcher.fn(
+		&(hey_event_t){
+			.type = HEY_EVENT_NEW_TOKENS,
+			.new_tokens = {
+				.tokens = new_tokens,
+				.num_tokens = num_tokens,
+				.source = HEY_SOURCE_USER,
+			},
+		},
+		ctx,
+		ctx->watcher.userdata
+	);
 }
 
 void
@@ -720,7 +760,7 @@ hey_generate(hey_exec_t* ctx, hey_generate_options_t options) {
 	hey_var_t* capture = options.capture_into;
 
 	if (capture != NULL) {
-		capture->text.begin = ctx->state.num_chars;
+		capture->text.begin = ctx->state.num_chars + ctx->state.healing_prefix.length;
 		capture->tokens.begin = ctx->state.num_tokens;
 	}
 
