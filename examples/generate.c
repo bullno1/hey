@@ -3,7 +3,6 @@
 #include <hey_suffix.h>
 #include <hey_llama_cpp.h>
 #include <llama.h>
-#include <termcolor-c.h>
 #include <argparse.h>
 
 #include <stdlib.h>
@@ -12,6 +11,10 @@
 #include <stddef.h>
 #define SOKOL_IMPL
 #include <sokol_time.h>
+
+#ifndef _MSC_VER
+#include <termcolor-c.h>
+#endif
 
 typedef struct watcher_state_s {
 	double gpu_time;
@@ -29,11 +32,13 @@ watcher(const hey_event_t* event, hey_exec_t* ctx, void* userdata) {
 	watcher_state_t* watcher_state = userdata;
 	switch(event->type) {
 		case HEY_EVENT_NEW_TOKENS:
+#ifndef _MSC_VER
 			if (event->new_tokens.source == HEY_SOURCE_USER) {
 				reset_colors(stdout);
 			} else {
 				text_blue(stdout);
 			}
+#endif
 
 			for (hey_index_t i = 0; i < event->new_tokens.num_tokens; ++i) {
 				hey_token_t token = event->new_tokens.tokens[i];
@@ -81,7 +86,9 @@ generate(hey_exec_t* ctx, void* userdata) {
 
 	hey_str_t capture = hey_get_var(ctx, answer);
 	const hey_state_t* hey_state = hey_get_state(ctx);
+#ifndef _MSC_VER
 	reset_colors(stderr);
+#endif
 	fprintf(stderr, "\n------------\n");
 	fprintf(stderr, "Context: |%.*s|\n", hey_state->num_chars, hey_state->text);
 	fprintf(stderr, "Capture span: [%d, %d)\n", answer.text.begin, answer.text.end);
@@ -191,7 +198,7 @@ main(int argc, const char* argv[]) {
 	}
 	str_buf = malloc(max_token_len * ctx_size);
 
-	size_t num_chars = fread(str_buf, 1, ctx_size, input_file);
+	hey_index_t num_chars = (hey_index_t)fread(str_buf, 1, ctx_size, input_file);
 	if (ferror(input_file)) {
 		fprintf(stderr, "Could not read input file\n");
 		exit_code = EXIT_FAILURE;
@@ -205,7 +212,9 @@ main(int argc, const char* argv[]) {
 			.length = num_chars,
 		},
 	});
+#ifndef _MSC_VER
 	reset_colors(stdout);
+#endif
 end:
 	if (hey != NULL) {
 		hey_destroy(hey);

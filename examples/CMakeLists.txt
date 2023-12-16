@@ -20,4 +20,7 @@ target_link_libraries(
 	termcolor-c
 	sokol
 )
-set_target_properties(hey_generate PROPERTIES OUTPUT_NAME "generate")
+set_target_properties(hey_generate PROPERTIES
+	OUTPUT_NAME "generate"
+	MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>"
+)

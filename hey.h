@@ -62,6 +62,11 @@
 #define HEY_LOGIT_TYPE float
 #endif
 
+#ifndef HEY_ALIGN_TYPE
+#include <stddef.h>
+#define HEY_ALIGN_TYPE max_align_t
+#endif
+
 #include <stdbool.h>
 #include <math.h>
 
@@ -288,7 +293,7 @@ hey_detokenize(hey_exec_t* ctx, hey_token_t token);
 #if defined(HEY_IMPLEMENTATION) && !defined(HEY_MAIN_IMPLEMENTATION)
 #define HEY_MAIN_IMPLEMENTATION
 
-#include <math.h>
+#include <tgmath.h>
 #include <stdint.h>
 #include <stddef.h>
 
@@ -597,7 +602,7 @@ hey_get_llm(hey_exec_t* ctx) {
 
 void*
 hey_malloc(hey_exec_t* ctx, size_t size) {
-	return hey_arena_alloc(&ctx->owner->arena, size, _Alignof(max_align_t));
+	return hey_arena_alloc(&ctx->owner->arena, size, _Alignof(HEY_ALIGN_TYPE));
 }
 
 const hey_state_t*
@@ -727,7 +732,7 @@ hey_str_t
 hey_str_from_cstr(const char* str) {
 	return (hey_str_t){
 		.chars = str,
-		.length = strlen(str),
+		.length = (hey_index_t)strlen(str),
 	};
 }
 

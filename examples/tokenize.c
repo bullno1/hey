@@ -4,6 +4,7 @@
 #include <argparse.h>
 #include <stddef.h>
 #include <llama.h>
+#include <hey.h>
 
 int
 main(int argc, const char* argv[]) {
@@ -85,7 +86,7 @@ main(int argc, const char* argv[]) {
 	str_buf = malloc(max_token_len * ctx_size);
 	tmp_buf = malloc(max_token_len);
 
-	size_t num_chars = fread(str_buf, 1, ctx_size, input_file);
+	hey_index_t num_chars = (hey_index_t)fread(str_buf, 1, ctx_size, input_file);
 	if (ferror(input_file)) {
 		fprintf(stderr, "Could not read input file\n");
 		exit_code = EXIT_FAILURE;

@@ -10,6 +10,10 @@ if (IPO_SUPPORTED)
 	set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RelWithDebInfo TRUE)
 endif ()
 
+if (MSVC)
+	set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded")
+endif()
+
 # Add deps first
 add_subdirectory(deps)
 
@@ -43,9 +47,12 @@ function (setup_library LIBRARY_NAME IS_STATIC SOURCES)
 endfunction ()
 
 if (MSVC)
-    add_compile_options(/W4 /WX)
+	add_compile_options(/W3 /WX)
+	add_compile_definitions(_CRT_SECURE_NO_WARNINGS)
+	# Work around a weird bug in MSVC
+	add_compile_definitions(HEY_ALIGN_TYPE=double)
 else()
-    add_compile_options(-Wall -Wextra -pedantic -Werror)
+	add_compile_options(-Wall -Wextra -pedantic -Werror)
 endif()
 
 add_library(hey INTERFACE)
