@@ -7,3 +7,6 @@
 [submodule "deps/termcolor-c"]
 	path = deps/termcolor-c
 	url = https://github.com/ararslan/termcolor-c.git
+[submodule "deps/sokol"]
+	path = deps/sokol
+	url = https://github.com/floooh/sokol.git

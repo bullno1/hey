@@ -18,5 +18,6 @@ target_link_libraries(
 	hey
 	llama
 	termcolor-c
+	sokol
 )
 set_target_properties(hey_generate PROPERTIES OUTPUT_NAME "generate")

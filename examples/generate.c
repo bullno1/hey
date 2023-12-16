@@ -10,40 +10,65 @@
 #include <stdio.h>
 #include <string.h>
 #include <stddef.h>
+#define SOKOL_IMPL
+#include <sokol_time.h>
 
-struct state {
+typedef struct watcher_state_s {
+	double gpu_time;
+	double cpu_time;
+	uint64_t last_time;
+} watcher_state_t;
+
+typedef struct state_s {
 	hey_str_t input;
 	bool allow_special;
-};
+} state_t;
 
 static void
 watcher(const hey_event_t* event, hey_exec_t* ctx, void* userdata) {
-	(void)userdata;
-
-	if (event->type == HEY_EVENT_NEW_TOKENS) {
-		if (event->new_tokens.source == HEY_SOURCE_USER) {
-			reset_colors(stdout);
-		} else {
-			text_blue(stdout);
-		}
-
-		for (hey_index_t i = 0; i < event->new_tokens.num_tokens; ++i) {
-			hey_token_t token = event->new_tokens.tokens[i];
-			hey_str_t str = hey_detokenize(ctx, token);
-			str.chars += event->new_tokens.healing_offset;
-			str.length -= event->new_tokens.healing_offset;
-			if (str.length > 0) {
-				fprintf(stdout, "%.*s", str.length, str.chars);
-				fflush(stdout);
+	watcher_state_t* watcher_state = userdata;
+	switch(event->type) {
+		case HEY_EVENT_NEW_TOKENS:
+			if (event->new_tokens.source == HEY_SOURCE_USER) {
+				reset_colors(stdout);
+			} else {
+				text_blue(stdout);
 			}
-		}
+
+			for (hey_index_t i = 0; i < event->new_tokens.num_tokens; ++i) {
+				hey_token_t token = event->new_tokens.tokens[i];
+				hey_str_t str = hey_detokenize(ctx, token);
+				str.chars += event->new_tokens.healing_offset;
+				str.length -= event->new_tokens.healing_offset;
+				if (str.length > 0) {
+					fprintf(stdout, "%.*s", str.length, str.chars);
+					fflush(stdout);
+				}
+			}
+			break;
+		case HEY_EVENT_EVAL_BEGIN:
+		case HEY_EVENT_SAMPLING_BEGIN:
+			watcher_state->last_time = stm_now();;
+			break;
+		case HEY_EVENT_EVAL_END:
+			watcher_state->gpu_time += stm_ms(stm_since(watcher_state->last_time));
+			break;
+		case HEY_EVENT_SAMPLING_END:
+			watcher_state->cpu_time += stm_ms(stm_since(watcher_state->last_time));
+			break;
+		default:
+			break;
 	}
 }
 
 static void
 generate(hey_exec_t* ctx, void* userdata) {
-	struct state* state = userdata;
-	hey_set_watcher(ctx, (hey_watcher_t){ .fn = watcher });
+	state_t* state = userdata;
+	struct watcher_state_s watcher_state = { 0 };
+	hey_set_watcher(ctx, (hey_watcher_t){
+		.fn = watcher,
+		.userdata = &watcher_state
+	});
 
 	const hey_llm_t* llm = hey_get_llm(ctx);
 	hey_push_str(ctx, state->input, state->allow_special);
@@ -60,11 +85,15 @@ generate(hey_exec_t* ctx, void* userdata) {
 	fprintf(stderr, "\n------------\n");
 	fprintf(stderr, "Context: |%.*s|\n", hey_state->num_chars, hey_state->text);
 	fprintf(stderr, "Capture span: [%d, %d)\n", answer.text.begin, answer.text.end);
-	fprintf(stderr, "Capture: |%.*s|", capture.length, capture.chars);
+	fprintf(stderr, "Capture: |%.*s|\n", capture.length, capture.chars);
+	fprintf(stderr, "Total gpu time: %fms\n", watcher_state.gpu_time);
+	fprintf(stderr, "Total cpu time: %fms\n", watcher_state.cpu_time);
 }
 
 int
 main(int argc, const char* argv[]) {
+	stm_setup();
+
 	char* model_path = NULL;
 	char* input_path = "-";
 	int allow_special = false;
@@ -169,7 +198,7 @@ main(int argc, const char* argv[]) {
 		goto end;
 	}
 
-	hey_execute(hey, generate, &(struct state){
+	hey_execute(hey, generate, &(state_t){
 		.allow_special = allow_special,
 		.input = {
 			.chars = str_buf,
