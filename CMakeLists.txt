@@ -43,7 +43,8 @@ function (setup_library LIBRARY_NAME IS_STATIC SOURCES)
 endfunction ()
 
 if (MSVC)
-	add_compile_options(/W3 /WX)
+	# 4200: Flexible array member is a standard feature since C99
+	add_compile_options(/W4 /WX /wd4200)
 	add_compile_definitions(_CRT_SECURE_NO_WARNINGS)
 	# Work around a weird bug in MSVC
 	add_compile_definitions(HEY_ALIGN_TYPE=double)
