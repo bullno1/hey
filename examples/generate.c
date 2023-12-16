@@ -30,6 +30,8 @@ watcher(const hey_event_t* event, hey_exec_t* ctx, void* userdata) {
 		for (hey_index_t i = 0; i < event->new_tokens.num_tokens; ++i) {
 			hey_token_t token = event->new_tokens.tokens[i];
 			hey_str_t str = hey_detokenize(ctx, token);
+			str.chars += event->new_tokens.healing_offset;
+			str.length -= event->new_tokens.healing_offset;
 			fprintf(stdout, "%.*s", str.length, str.chars);
 			fflush(stdout);
 		}

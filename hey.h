@@ -178,6 +178,7 @@ typedef struct hey_event_s {
 		struct {
 			const hey_token_t* tokens;
 			hey_index_t num_tokens;
+			hey_index_t healing_offset;
 			hey_text_source_t source;
 		} new_tokens;
 
@@ -817,6 +818,7 @@ hey_generate(hey_exec_t* ctx, hey_generate_options_t options) {
 				}
 			}
 		}
+		hey_index_t healing_offset = ctx->state.healing_prefix.length;
 
 		// Generation processor
 		options.logit_processor.fn(logits, vocab_size, ctx, options.logit_processor.userdata);
@@ -837,6 +839,7 @@ hey_generate(hey_exec_t* ctx, hey_generate_options_t options) {
 					.tokens = &chosen_token,
 					.num_tokens = 1,
 					.source = HEY_SOURCE_LLM,
+					.healing_offset = healing_offset,
 				},
 			},
 			ctx,
