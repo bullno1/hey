@@ -14,6 +14,12 @@ jobs:
           arch: x64
           sdk: 10.0.22621.0
           vsversion: 2022
+      - uses: Jimver/cuda-toolkit@v0.2.11
+	id: cuda-toolkit
+	with:
+	  cuda: '12.3.1'
+          sub-packages:
+	    - nvcc
       - name: Generate project
         run: cmd.exe /c msvc.bat
       - name: Build
