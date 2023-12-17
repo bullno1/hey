@@ -40,7 +40,7 @@ jobs:
         with:
           submodules: recursive
       - name: Install CUDA
-        uses: Jimver/cuda-toolkit@v0.2.11
+        uses: bullno1/cuda-toolkit@master
         with:
           cuda: '12.2.0'
           method: network
