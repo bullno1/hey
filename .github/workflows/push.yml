@@ -21,10 +21,8 @@ jobs:
         uses: Jimver/cuda-toolkit@v0.2.11
         with:
           cuda: '12.2.0'
-          sub-packages: '["nvcc"]'
+          sub-packages: '["nvcc", "visual_studio_integration"]'
       - name: Generate project
-        env:
-          CUDA_PATH: "${{ steps.cuda-toolkit.outputs.CUDA_PATH }}"
         run: cmd.exe /c msvc.bat
       - name: Build
         run: |
