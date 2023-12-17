@@ -87,7 +87,7 @@ generate(hey_exec_t* ctx, void* userdata) {
 	hey_str_t capture = hey_get_var(ctx, answer);
 	const hey_state_t* hey_state = hey_get_state(ctx);
 
-	hey_term_put(stdout, ANSI_CODE_RESET);
+	hey_term_put(stderr, ANSI_CODE_RESET);
 	fprintf(stderr, "\n------------\n");
 	fprintf(stderr, "Context: |%.*s|\n", hey_state->num_chars, hey_state->text);
 	fprintf(stderr, "Capture span: [%d, %d)\n", answer.text.begin, answer.text.end);

@@ -6,12 +6,15 @@
 #	include <windows.h>
 #	include <io.h>
 #else
+#	ifndef _DEFAULT_SOURCE
+#		define _DEFAULT_SOURCE
+#	endif
 #	include <unistd.h>
 #endif
 
 #include <stdbool.h>
 #include <stdio.h>
-#include <varargs.h>
+#include <stdarg.h>
 
 #define ANSI_CODE_RESET      "\033[00m"
 #define ANSI_CODE_BOLD       "\033[1m"

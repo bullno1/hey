@@ -28,3 +28,31 @@ jobs:
         run: |
           cd msvc
           msbuild hey.sln /property:Configuration=RelWithDebInfo
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Install CUDA
+        uses: Jimver/cuda-toolkit@v0.2.11
+        with:
+          cuda: '12.2.0'
+          method: network
+          sub-packages: '["nvcc", "cudart", "thrust"]'
+          non-cuda-sub-packages: '["libcublas", "libcublas-dev"]'
+      - name: Install LLVM and Clang
+        uses: KyleMayes/install-llvm-action@v1
+        with:
+          version: "16.0"
+      - name: Install Mold
+        uses: rui314/setup-mold@v1
+      - name: Install Ninja
+        uses: seanmiddleditch/gha-setup-ninja@master
+      - name: Install cmake
+        uses: jwlawson/actions-setup-cmake@v1.14
+        with:
+          cmake-version: '3.18.x'
+      - name: Build
+        run: ./build
