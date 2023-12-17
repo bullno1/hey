@@ -6,14 +6,22 @@ jobs:
   build-windows:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v2
+      - name: Checkout code
+        uses: actions/checkout@v2
         with:
           submodules: recursive
-      - uses: ilammy/msvc-dev-cmd@v1
+      - name: Install MSVC
+        uses: ilammy/msvc-dev-cmd@v1
         with:
           arch: x64
           sdk: 10.0.22621.0
           vsversion: 2022
+      - name: Install CUDA
+        id: cuda-toolkit
+        uses: Jimver/cuda-toolkit@v0.2.11
+        with:
+          cuda: '12.2.0'
+          sub-packages: '["nvcc", "visual_studio_integration", "cudart", "cublas", "cublas_dev", "thrust"]'
       - name: Generate project
         run: cmd.exe /c msvc.bat
       - name: Build
