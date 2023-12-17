@@ -21,7 +21,7 @@ jobs:
         uses: Jimver/cuda-toolkit@v0.2.11
         with:
           cuda: '12.2.0'
-          sub-packages: '["nvcc", "visual_studio_integration", "cudart", "cublas", "cublas_dev"]'
+          sub-packages: '["nvcc", "visual_studio_integration", "cudart", "cublas", "cublas_dev", "thrust"]'
       - name: Generate project
         run: cmd.exe /c msvc.bat
       - name: Build
