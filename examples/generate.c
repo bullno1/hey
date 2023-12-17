@@ -18,6 +18,7 @@ typedef struct watcher_state_s {
 	double gpu_time;
 	double cpu_time;
 	uint64_t last_time;
+	hey_index_t num_llm_tokens;
 } watcher_state_t;
 
 typedef struct state_s {
@@ -30,6 +31,9 @@ watcher(const hey_event_t* event, hey_exec_t* ctx, void* userdata) {
 	watcher_state_t* watcher_state = userdata;
 	switch(event->type) {
 		case HEY_EVENT_NEW_TOKENS:
+			watcher_state->num_llm_tokens +=
+				event->new_tokens.source == HEY_SOURCE_LLM ? 1 : 0;
+
 			if (event->new_tokens.source == HEY_SOURCE_USER) {
 				hey_term_put(stdout, ANSI_CODE_RESET);
 			} else {
@@ -90,6 +94,7 @@ generate(hey_exec_t* ctx, void* userdata) {
 	fprintf(stderr, "Capture: |%.*s|\n", capture.length, capture.chars);
 	fprintf(stderr, "Total gpu time: %fms\n", watcher_state.gpu_time);
 	fprintf(stderr, "Total cpu time: %fms\n", watcher_state.cpu_time);
+	fprintf(stderr, "Generation speed: %ft/s\n", (double)watcher_state.num_llm_tokens / watcher_state.gpu_time * 1000.0);
 }
 
 int
