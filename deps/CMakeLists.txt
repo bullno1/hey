@@ -4,5 +4,4 @@ endif ()
 
 include(llama.cpp.cmake)
 include(argparse.cmake)
-include(termcolor-c.cmake)
 include(sokol.cmake)
