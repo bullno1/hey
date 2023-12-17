@@ -77,7 +77,6 @@ hey_llama_cpp_eval(
 		}
 	}
 
-	llama_kv_cache_seq_rm(adapter->context, 0, prefix_len, -1);
 	llama_decode(
 		adapter->context,
 		llama_batch_get_one(tokens + prefix_len, num_tokens - prefix_len, prefix_len, 0)
@@ -89,6 +88,12 @@ hey_llama_cpp_eval(
 		llama_get_logits(adapter->context),
 		sizeof(hey_logit_t) * vocab_size
 	);
+	HEY_MEMCPY(
+		adapter->tokens + prefix_len,
+		tokens + prefix_len,
+		num_tokens - prefix_len
+	);
+	adapter->num_tokens = num_tokens;
 }
 
 size_t

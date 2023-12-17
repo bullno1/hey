@@ -15,9 +15,11 @@
 #include "termcolor.h"
 
 typedef struct watcher_state_s {
+	double prompt_processing_time;
 	double gpu_time;
 	double cpu_time;
 	uint64_t last_time;
+	bool processed_prompt;
 	hey_index_t num_llm_tokens;
 } watcher_state_t;
 
@@ -56,7 +58,12 @@ watcher(const hey_event_t* event, hey_exec_t* ctx, void* userdata) {
 			watcher_state->last_time = stm_now();;
 			break;
 		case HEY_EVENT_EVAL_END:
-			watcher_state->gpu_time += stm_ms(stm_since(watcher_state->last_time));
+			if (watcher_state->processed_prompt) {
+				watcher_state->gpu_time += stm_ms(stm_since(watcher_state->last_time));
+			} else {
+				watcher_state->prompt_processing_time = stm_ms(stm_since(watcher_state->last_time));
+				watcher_state->processed_prompt = true;
+			}
 			break;
 		case HEY_EVENT_SAMPLING_END:
 			watcher_state->cpu_time += stm_ms(stm_since(watcher_state->last_time));
@@ -92,6 +99,7 @@ generate(hey_exec_t* ctx, void* userdata) {
 	fprintf(stderr, "Context: |%.*s|\n", hey_state->num_chars, hey_state->text);
 	fprintf(stderr, "Capture span: [%d, %d)\n", answer.text.begin, answer.text.end);
 	fprintf(stderr, "Capture: |%.*s|\n", capture.length, capture.chars);
+	fprintf(stderr, "Prompt processing time: %fms\n", watcher_state.prompt_processing_time);
 	fprintf(stderr, "Total gpu time: %fms\n", watcher_state.gpu_time);
 	fprintf(stderr, "Total cpu time: %fms\n", watcher_state.cpu_time);
 	fprintf(stderr, "Generation speed: %ft/s\n", (double)watcher_state.num_llm_tokens / watcher_state.gpu_time * 1000.0);
