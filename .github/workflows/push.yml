@@ -21,7 +21,7 @@ jobs:
           vsversion: 2022
       - name: Install CUDA
         id: cuda-toolkit
-        uses: Jimver/cuda-toolkit@v0.2.11
+        uses: bullno1/cuda-toolkit@master
         with:
           cuda: '12.2.0'
           method: network
@@ -40,7 +40,7 @@ jobs:
         with:
           submodules: recursive
       - name: Install CUDA
-        uses: bullno1/cuda-toolkit@master
+        uses: Jimver/cuda-toolkit@v0.2.11
         with:
           cuda: '12.2.0'
           method: network
