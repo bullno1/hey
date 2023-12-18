@@ -1,0 +1,21 @@
+name: Nightly build
+run-name: Nightly
+on:
+  schedule:
+    - cron: '0 0 * * *'
+jobs:
+  build-windows:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 10
+      - name: Check for commits within time
+        uses: AlexHolderDeveloper/CommitsWithinTime@v1.1.11
+        id: commitswithintime
+        with:
+          hours: 24
+      - name: Trigger windows build
+        if: steps.commitswithintime.outputs.has-new-commits-within-time
+        uses: bullno1/hey/.github/workflows/windows-build.yml@master
