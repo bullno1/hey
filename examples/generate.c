@@ -5,8 +5,10 @@
 
 static void
 generate(hey_exec_t* ctx, void* userdata) {
-	(void)userdata;
+	const exec_input_t* input = userdata;
 	const hey_llm_t* llm = hey_get_llm(ctx);
+
+	hey_push_str(ctx, input->input_string, true);
 
 	hey_var_t answer;
 	hey_generate(ctx, (hey_generate_options_t){

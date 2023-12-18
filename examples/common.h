@@ -76,8 +76,6 @@ example_exec(hey_exec_t* ctx, void* userdata) {
 		.userdata = &watcher_state
 	});
 
-	hey_push_str(ctx, input->input_string, true);
-
 	input->fn(ctx, input);
 
 	const hey_state_t* hey_state = hey_get_state(ctx);
@@ -96,7 +94,6 @@ example_main(int argc, const char* argv[], hey_fn_t fn) {
 
 	char* model_path = NULL;
 	char* input_path = "-";
-	int allow_special = false;
 	int num_gpu_layers = 999;
 	int exit_code = EXIT_SUCCESS;
 	struct llama_context* llama_context = NULL;
@@ -118,12 +115,6 @@ example_main(int argc, const char* argv[], hey_fn_t fn) {
 			.short_name = 'i',
 			.help = "The input file. Use `-` for stdin.",
 			.value = &input_path,
-		},
-		{
-			.type = ARGPARSE_OPT_BOOLEAN,
-			.long_name = "allow-special",
-			.help = "Allow special tokens",
-			.value = &allow_special,
 		},
 		{
 			.type = ARGPARSE_OPT_INTEGER,

@@ -58,6 +58,11 @@
 #define HEY_INDEX_TYPE int32_t
 #endif
 
+#ifndef HEY_VSNPRINTF
+#include <stdio.h>
+#define HEY_VSNPRINTF(OUTPUT, SIZE, FORMAT, ARGS) vsnprintf(OUTPUT, SIZE, FORMAT, ARGS)
+#endif
+
 #ifndef HEY_LOGIT_TYPE
 #define HEY_LOGIT_TYPE float
 #endif
@@ -65,6 +70,20 @@
 #ifndef HEY_ALIGN_TYPE
 #include <stddef.h>
 #define HEY_ALIGN_TYPE max_align_t
+#endif
+
+// https://stackoverflow.com/a/6849629
+#if _MSC_VER >= 1400
+#	include <sal.h>
+#	if _MSC_VER > 1400
+#		define HEY_FMT_STR(FMT) _Printf_format_string_ FMT
+#	else
+#		define HEY_FMT_STR(FMT) __format_string FMT
+#	endif
+#	define HEY_PRINTF_LIKE(N, M)
+#else
+#	define HEY_FMT_STR(FMT) FMT
+#	define HEY_PRINTF_LIKE(N, M) __attribute__((format(printf,N,M)))
 #endif
 
 #include <stdbool.h>
@@ -81,7 +100,7 @@
 #define HEY_ARRAY_ALLOC(CTX, TYPE, LEN) HEY_MALLOC(CTX, sizeof(TYPE) * LEN)
 
 #define HEY_STR(LITERAL) \
-	(hey_str_t){ .chars = LITERAL, .length = sizeof(LITERAL) }
+	(hey_str_t){ .chars = LITERAL, .length = sizeof(LITERAL) - 1}
 
 #define HEY_ARRAY(TYPE, ...) (TYPE[]){ __VA_ARGS__, { 0 } }
 
@@ -274,6 +293,13 @@ HEY_API void
 hey_push_str(hey_exec_t* ctx, hey_str_t string, bool allow_special);
 
 HEY_API void
+hey_push_str_fmt(
+	hey_exec_t* ctx,
+	bool allow_special,
+	HEY_FMT_STR(const char* fmt), ...
+) HEY_PRINTF_LIKE(3, 4);
+
+HEY_API void
 hey_push_var(hey_exec_t* ctx, hey_var_t var);
 
 HEY_API void
@@ -296,6 +322,7 @@ hey_detokenize(hey_exec_t* ctx, hey_token_t token);
 #include <tgmath.h>
 #include <stdint.h>
 #include <stddef.h>
+#include <stdarg.h>
 
 #define HEY_PRIVATE static inline
 
@@ -551,7 +578,9 @@ hey_create(hey_options_t options) {
 		.token_spans = HEY_ARRAY_ALLOC(
 			options->memctx, hey_span_t, options.llm.context_size
 		),
-		.tmp_str_buf = HEY_MALLOC(options->memctx, max_token_len),
+		.tmp_str_buf = HEY_MALLOC(
+			options->memctx, max_token_len * options.llm.context_size
+		),
 	};
 
 	hey_arena_init(&hey->arena, HEY_ARENA_CHUNK_SIZE);
@@ -612,6 +641,29 @@ hey_get_state(hey_exec_t* ctx) {
 }
 
 void
+hey_push_str_fmt(hey_exec_t* ctx, bool allow_special, const char* fmt, ...) {
+	hey_t* hey = ctx->owner;
+
+	char* tmp_str_buf = hey->tmp_str_buf;
+	size_t max_len = hey->max_token_len * hey->options.llm.context_size;
+	va_list args;
+	va_start(args, fmt);
+	hey_index_t len = HEY_VSNPRINTF(tmp_str_buf, max_len, fmt, args);
+	va_end(args);
+	HEY_ASSERT(len >= 0, "Encoding error");
+	HEY_ASSERT(len < (hey_index_t)max_len, "Context overflow");
+
+	hey_push_str(
+		ctx,
+		(hey_str_t){
+			.chars = tmp_str_buf,
+			.length = len
+		},
+		allow_special
+	);
+}
+
+void
 hey_push_str(hey_exec_t* ctx, hey_str_t string, bool allow_special) {
 	hey_t* hey = ctx->owner;
 
@@ -626,6 +678,7 @@ hey_push_str(hey_exec_t* ctx, hey_str_t string, bool allow_special) {
 
 	HEY_ASSERT(num_tokens <= num_tokens_left, "Context overflow");
 	ctx->state.num_tokens += num_tokens;
+	ctx->state.healing_prefix.length = 0;
 
 	ctx->watcher.fn(
 		&(hey_event_t){
@@ -655,6 +708,7 @@ hey_push_tokens(hey_exec_t* ctx, const hey_token_t* tokens, hey_index_t num_toke
 		num_tokens * sizeof(hey_token_t)
 	);
 	ctx->state.num_tokens += num_tokens;
+	ctx->state.healing_prefix.length = 0;
 
 	ctx->watcher.fn(
 		&(hey_event_t){
@@ -907,7 +961,7 @@ hey_generate(hey_exec_t* ctx, hey_generate_options_t options) {
 						hey_rewind(ctx, i);
 
 						if (capture != NULL) {
-							capture->text.end = token_span.end;
+							capture->text.end = num_chars;
 							capture->tokens.end = i;
 						}
 

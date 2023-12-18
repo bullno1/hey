@@ -8,7 +8,8 @@ hey_one_of(const hey_controller_t controllers[]);
 
 #endif
 
-#ifdef HEY_IMPLEMENTATION
+#if defined(HEY_IMPLEMENTATION) && !defined(HEY_ONE_OF_IMPLEMENTATION)
+#define HEY_ONE_OF_IMPLEMENTATION
 
 HEY_PRIVATE hey_control_decision_t
 hey_one_of_controller(hey_index_t* count, hey_exec_t* ctx, void* userdata) {
