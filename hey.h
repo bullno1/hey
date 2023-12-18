@@ -846,6 +846,10 @@ hey_generate(hey_exec_t* ctx, hey_generate_options_t options) {
 		ctx->state.num_tokens -= 1;
 		ctx->sync_index = ctx->state.num_tokens;
 		ctx->state.num_chars = last_token_span.begin;
+
+		if (capture != NULL) {
+			capture->tokens.begin = ctx->state.num_tokens;
+		}
 	}
 
 	hey_logit_t* logits = hey->logits;

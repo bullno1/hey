@@ -48,21 +48,26 @@ knockknock(hey_exec_t* ctx, void* userdata) {
 		true
 	);
 
+	// Generate the setup
 	hey_var_t who;
 	hey_generate(ctx, (hey_generate_options_t){
 		.controller = { .fn = ends_at_punctuation },
 		.capture_into = &who,
 	});
 
+	// Reformat the setup line so that it always end with an exclamation mark.
 	hey_str_t who_str = hey_get_var(ctx, who);
+	hey_rewind(ctx, who.tokens.begin);
 	hey_push_str_fmt(
 		ctx, false,
-		"!\n"
+		"%.*s!\n"
 		"B: %.*s who?\n"
 		"A: ",
+		who_str.length, who_str.chars,
 		who_str.length, who_str.chars
 	);
 
+	// Generate the punchline
 	hey_var_t punchline;
 	hey_generate(ctx, (hey_generate_options_t){
 		.controller = { .fn = ends_at_punctuation },

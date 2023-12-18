@@ -80,7 +80,14 @@ example_exec(hey_exec_t* ctx, void* userdata) {
 
 	const hey_state_t* hey_state = hey_get_state(ctx);
 	fprintf(stderr, "\n------------\n");
-	fprintf(stderr, "Context: |%.*s|\n", hey_state->num_chars, hey_state->text);
+	fprintf(stderr, "Cached text: |%.*s|\n", hey_state->num_chars, hey_state->text);
+	fprintf(stderr, "Actual text: |");
+	for (hey_index_t i = 0; i < hey_state->num_tokens; ++i) {
+		hey_str_t token_str = hey_detokenize(ctx, hey_state->tokens[i]);
+		fprintf(stderr, "%.*s", token_str.length, token_str.chars);
+	}
+	fprintf(stderr, "|\n");
+
 	fprintf(stderr, "Prompt processing time: %fms\n", watcher_state.prompt_processing_time);
 	fprintf(stderr, "Total gpu time: %fms\n", watcher_state.gpu_time);
 	fprintf(stderr, "Total cpu time: %fms\n", watcher_state.cpu_time);
