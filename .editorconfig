@@ -16,3 +16,4 @@ indent_style = space
 
 [examples/*.txt]
 trim_trailing_whitespace = false
+insert_final_newline = false

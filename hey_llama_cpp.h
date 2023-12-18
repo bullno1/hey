@@ -61,6 +61,22 @@ hey_llama_cpp_detokenize(
 	return num_chars_out >= 0 ? num_chars_out : -num_chars_out;
 }
 
+HEY_PRIVATE hey_index_t
+hey_llama_cpp_find_prefix_len(
+	const hey_token_t* restrict seq1, hey_index_t seq1_len,
+	const hey_token_t* restrict seq2, hey_index_t seq2_len
+) {
+	hey_index_t cmp_len = HEY_MIN(seq1_len, seq2_len);
+	hey_index_t i;
+	for (i = 0; i < cmp_len; ++i) {
+		if (seq1[i] != seq2[i]) {
+			break;
+		}
+	}
+
+	return i;
+}
+
 HEY_PRIVATE void
 hey_llama_cpp_eval(
 	hey_token_t* tokens, hey_index_t num_tokens,
@@ -69,14 +85,12 @@ hey_llama_cpp_eval(
 ) {
 	hey_llama_cpp_adapter_t* adapter = ctx;
 
-	hey_index_t prefix_len;
-	hey_index_t cmp_len = HEY_MIN(num_tokens, adapter->num_tokens);
-	for (prefix_len = 0; prefix_len < cmp_len; ++prefix_len) {
-		if (adapter->tokens[prefix_len] != tokens[prefix_len]) {
-			break;
-		}
-	}
+	hey_index_t prefix_len = hey_llama_cpp_find_prefix_len(
+		adapter->tokens, adapter->num_tokens,
+		tokens, num_tokens
+	);
 
+	llama_kv_cache_seq_rm(adapter->context, 0, prefix_len, -1);
 	llama_decode(
 		adapter->context,
 		llama_batch_get_one(tokens + prefix_len, num_tokens - prefix_len, prefix_len, 0)
@@ -91,7 +105,7 @@ hey_llama_cpp_eval(
 	HEY_MEMCPY(
 		adapter->tokens + prefix_len,
 		tokens + prefix_len,
-		num_tokens - prefix_len
+		sizeof(hey_token_t) * (num_tokens - prefix_len)
 	);
 	adapter->num_tokens = num_tokens;
 }
