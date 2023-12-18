@@ -23,7 +23,7 @@ jobs:
         id: cuda-toolkit
         uses: bullno1/cuda-toolkit@master
         with:
-          cuda: '12.2.0'
+          cuda: '12.3.1'
           method: network
           sub-packages: '["nvcc", "visual_studio_integration", "cudart", "cublas", "cublas_dev", "thrust"]'
       - name: Generate project
