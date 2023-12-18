@@ -1,0 +1,7 @@
+#!/bin/sh
+
+./build
+bin/generate \
+	--model=${HEY_MODEL_DIR:-~/Downloads}/nous-hermes-llama2-13b.Q5_K_M.gguf \
+	--allow-special \
+	--input=examples/nous-hermes-generate.txt
