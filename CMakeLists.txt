@@ -6,8 +6,8 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 include(CheckIPOSupported)
 check_ipo_supported(RESULT IPO_SUPPORTED)
 if (IPO_SUPPORTED)
-	set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_Release TRUE)
-	set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RelWithDebInfo TRUE)
+	set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE)
+	set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELWITHDEBINFO TRUE)
 endif ()
 
 # Add deps first
@@ -46,7 +46,7 @@ if (MSVC)
 	# 4200: Flexible array member is a standard feature since C99
 	add_compile_options(/W4 /WX /wd4200)
 	add_compile_definitions(_CRT_SECURE_NO_WARNINGS)
-	# Work around a weird bug in MSVC
+	# MSVC does not define max_align_t
 	add_compile_definitions(HEY_ALIGN_TYPE=double)
 else()
 	add_compile_options(-Wall -Wextra -pedantic -Werror)
