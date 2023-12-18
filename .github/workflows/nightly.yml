@@ -1,4 +1,4 @@
-name: Nightly build
+name: Nightly
 run-name: Nightly
 on:
   schedule:
@@ -18,4 +18,6 @@ jobs:
           hours: 24
       - name: Trigger windows build
         if: steps.commitswithintime.outputs.has-new-commits-within-time
-        uses: bullno1/hey/.github/workflows/windows-build.yml@master
+        uses: benc-uk/workflow-dispatch@v1
+        with:
+          workflow: Windows build
