@@ -3,4 +3,4 @@
 ./build
 bin/knockknock \
 	--model=${HEY_MODEL_DIR:-~/Downloads}/nous-hermes-llama2-13b.Q5_K_M.gguf \
-	--input=examples/nous-hermes-generate.txt
+	--input=/dev/null

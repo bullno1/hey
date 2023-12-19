@@ -2,42 +2,7 @@ SET(CMAKE_SKIP_BUILD_RPATH FALSE)
 SET(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
 SET(CMAKE_INSTALL_RPATH "\${ORIGIN}")
 
-add_executable(hey_tokenize "tokenize.c")
-target_link_libraries(
-	hey_tokenize PRIVATE
-	argparse
-	hey
-	llama
-)
-set_target_properties(hey_tokenize PROPERTIES OUTPUT_NAME "tokenize")
-
-add_executable(hey_generate "generate.c")
-target_link_libraries(
-	hey_generate PRIVATE
-	argparse
-	hey
-	llama
-	sokol
-)
-set_target_properties(hey_generate PROPERTIES OUTPUT_NAME "generate")
-
-add_executable(hey_knockknock "knockknock.c")
-target_link_libraries(
-	hey_knockknock PRIVATE
-	argparse
-	hey
-	llama
-	sokol
-)
-set_target_properties(hey_knockknock PROPERTIES OUTPUT_NAME "knockknock")
-
-add_executable(hey_calculator "calculator.c")
-target_link_libraries(
-	hey_calculator PRIVATE
-	argparse
-	hey
-	llama
-	sokol
-	expr
-)
-set_target_properties(hey_calculator PROPERTIES OUTPUT_NAME "calculator")
+include(tokenize.cmake)
+include(generate.cmake)
+include(knocknock.cmake)
+include(calculator.cmake)
