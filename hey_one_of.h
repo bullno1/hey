@@ -3,8 +3,13 @@
 
 #include "hey.h"
 
+typedef struct hey_one_of_s {
+	hey_index_t* index;
+	const hey_controller_t* controllers;
+} hey_one_of_t;
+
 HEY_API hey_controller_t
-hey_one_of(const hey_controller_t controllers[]);
+hey_one_of(hey_one_of_t* oneof);
 
 #endif
 
@@ -13,16 +18,20 @@ hey_one_of(const hey_controller_t controllers[]);
 
 HEY_PRIVATE hey_control_decision_t
 hey_one_of_controller(hey_index_t* count, hey_exec_t* ctx, void* userdata) {
-	const hey_controller_t* controllers = userdata;
+	const hey_one_of_t* oneof = userdata;
 
-	for (hey_index_t i = 0; controllers[i].fn != NULL; ++i) {
-		const hey_controller_t* controller = &controllers[i];
+	for (hey_index_t i = 0; oneof->controllers[i].fn != NULL; ++i) {
+		const hey_controller_t* controller = &oneof->controllers[i];
 
 		hey_control_decision_t decision = controller->fn(
 			count, ctx, controller->userdata
 		);
 
 		if (decision != HEY_CONTINUE) {
+			if (oneof->index != NULL) {
+				*(oneof->index) = i;
+			}
+
 			return decision;
 		}
 	}
@@ -31,9 +40,9 @@ hey_one_of_controller(hey_index_t* count, hey_exec_t* ctx, void* userdata) {
 }
 
 hey_controller_t
-hey_one_of(const hey_controller_t controllers[]) {
+hey_one_of(hey_one_of_t* oneof) {
 	return (hey_controller_t){
-		.userdata = (void*)controllers,
+		.userdata = oneof,
 		.fn = hey_one_of_controller,
 	};
 }

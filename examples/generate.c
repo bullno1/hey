@@ -24,6 +24,7 @@ generate(hey_exec_t* ctx, void* userdata) {
 	fprintf(stderr, "Capture: |%.*s|\n", capture.length, capture.chars);
 }
 
-int main(int argc, const char* argv[]) {
+int
+main(int argc, const char* argv[]) {
 	return example_main(argc, argv, generate);
 }

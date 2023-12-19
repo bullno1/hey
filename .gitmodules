@@ -8,3 +8,6 @@
 [submodule "deps/sokol"]
 	path = deps/sokol
 	url = https://github.com/floooh/sokol.git
+[submodule "deps/expr"]
+	path = deps/expr
+	url = https://github.com/zserge/expr.git

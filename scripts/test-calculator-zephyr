@@ -1,0 +1,6 @@
+#!/bin/sh -e
+
+./build
+bin/calculator \
+	--model=${HEY_MODEL_DIR:-~/Downloads}/zephyr-7b-beta.Q5_K_M.gguf \
+	--input=examples/calculator-zephyr.txt

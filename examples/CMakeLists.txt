@@ -30,3 +30,14 @@ target_link_libraries(
 	sokol
 )
 set_target_properties(hey_knockknock PROPERTIES OUTPUT_NAME "knockknock")
+
+add_executable(hey_calculator "calculator.c")
+target_link_libraries(
+	hey_calculator PRIVATE
+	argparse
+	hey
+	llama
+	sokol
+	expr
+)
+set_target_properties(hey_calculator PROPERTIES OUTPUT_NAME "calculator")

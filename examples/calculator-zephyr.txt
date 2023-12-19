@@ -1,0 +1,29 @@
+<s><|system|>
+You are an expert mathematician. You must answer mathematical questions by showing your calculations in angle brackets: << calculation >>. End your answer with ===.</s>
+<|user|>
+Every hour Joanne has to collect the coins out of the fountain inside the mall. During the first hour, she collected 15 coins. For the next two hours, she collected 35 coins from the fountain. In the fourth hour, she collected 50 coins from the fountain but she gave 15 of them to her coworker so she could buy a soda. How many coins did she have after the fourth hour?</s>
+<|assistant|>
+Let's think step by step.
+15 coins collected in hour one
+35 coins collected in hour two
+35 coins collected in hour three
+50 coins collected in hour four
+Before giving her coworker some coins there were << 15+35+35+50 >> = 135 coins
+The number of coins after given 15 to her coworker is << 135-15 >> = 120
+So the answer is 120
+=== 120</s>
+<|user|>
+Jerry’s two daughters play softball on different teams. They each have 8 games this season. Each team practices 4 hours for every game they play. If each game lasts for 2 hours, how many hours will Jerry spend at the field watching his daughters play and practice altogether?</s>
+<|assistant|>
+Let's think step by step.
+Jerry will spend 8 games x 2 hours per game which is << 8*2 >> = 16 hours watching one daughter play her games.
+He will spend 16 x 2, which is << 16*2 >> = 32 hours watching both daughters play their games.
+He will spend 8 games x 4 hours of practice, which is << 8*4 >> = 32 hours watching one daughter practice.
+He will spend 32 x 2, which is << 32*2 >> = 64 hours watching both daughters practice.
+He will spend a total of 32 hours watching games + 64 hours watching, practice which is << 32+64 >> = 96 hours.
+So the answer is 96.
+=== 96</s>
+<|user|>
+Toula went to the bakery and bought various types of pastries. She bought 3 dozen donuts which cost $68 per dozen, 2 dozen mini cupcakes which cost $80 per dozen, and 6 dozen mini cheesecakes for $55 per dozen. How much was the total cost?</s>
+<|assistant|>
+Let's think step by step.

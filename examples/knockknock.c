@@ -1,12 +1,12 @@
-#include "hey.h"
-#include "hey_one_of.h"
 #define HEY_IMPLEMENTATION
 #define SOKOL_IMPL
+#include "hey.h"
 #include "common.h"
 #include <hey_suffix.h>
-#include <hey_one_of.h>
 
-hey_control_decision_t ends_at_punctuation(
+// TODO: Make this a standard header?
+hey_control_decision_t
+ends_at_punctuation(
 	hey_index_t* count,
 	hey_exec_t* ctx, void* userdata
 ) {
@@ -79,6 +79,7 @@ knockknock(hey_exec_t* ctx, void* userdata) {
 	fprintf(stderr, "Punchline: |%.*s|\n", punchline_str.length, punchline_str.chars);
 }
 
-int main(int argc, const char* argv[]) {
+int
+main(int argc, const char* argv[]) {
 	return example_main(argc, argv, knockknock);
 }
