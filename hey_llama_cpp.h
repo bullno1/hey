@@ -4,12 +4,17 @@
 #include "hey.h"
 
 typedef struct llama_context hey_llama_context_t;
+typedef struct llama_context_params hey_llama_context_params_t;
 
 HEY_API size_t
 hey_llama_cpp_adapter_size(hey_llama_context_t* context);
 
 HEY_API hey_llm_t
-hey_llama_cpp_adapter_init(hey_llama_context_t* context, void* mem);
+hey_llama_cpp_adapter_init(
+	hey_llama_context_t* context,
+	hey_llama_context_params_t params,
+	void* mem
+);
 
 #endif
 
@@ -21,6 +26,7 @@ hey_llama_cpp_adapter_init(hey_llama_context_t* context, void* mem);
 typedef struct hey_llama_cpp_adapter_s {
 	struct llama_context* context;
 	hey_index_t num_tokens;
+	hey_index_t batch_size;
 	hey_token_t tokens[];
 } hey_llama_cpp_adapter_t;
 
@@ -91,10 +97,20 @@ hey_llama_cpp_eval(
 	);
 
 	llama_kv_cache_seq_rm(adapter->context, 0, prefix_len, -1);
-	llama_decode(
-		adapter->context,
-		llama_batch_get_one(tokens + prefix_len, num_tokens - prefix_len, prefix_len, 0)
-	);
+
+	hey_index_t num_tokens_left = num_tokens - prefix_len;
+	hey_index_t n_past = prefix_len;
+	while (num_tokens_left > 0) {
+		hey_index_t n_eval = HEY_MIN(
+			adapter->batch_size, num_tokens_left
+		);
+		llama_decode(
+			adapter->context,
+			llama_batch_get_one(tokens + n_past, n_eval, n_past, 0)
+		);
+		n_past += n_eval;
+		num_tokens_left -= n_eval;
+	}
 
 	hey_index_t vocab_size = llama_n_vocab(llama_get_model(adapter->context));
 	HEY_MEMCPY(
@@ -116,11 +132,16 @@ hey_llama_cpp_adapter_size(hey_llama_context_t* context) {
 }
 
 hey_llm_t
-hey_llama_cpp_adapter_init(hey_llama_context_t* context, void* mem) {
+hey_llama_cpp_adapter_init(
+	hey_llama_context_t* context,
+	hey_llama_context_params_t params,
+	void* mem
+) {
 	const struct llama_model* model = llama_get_model(context);
 	hey_llama_cpp_adapter_t* adapter = mem;
 	*adapter = (hey_llama_cpp_adapter_t){
 		.context = context,
+		.batch_size = params.n_batch,
 	};
 
 	return (hey_llm_t){

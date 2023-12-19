@@ -163,7 +163,7 @@ example_main(int argc, const char* argv[], hey_fn_t fn) {
 
 	size_t adapter_size = hey_llama_cpp_adapter_size(llama_context);
 	hey_llama_adapter = malloc(adapter_size);
-	hey_llm_t llm = hey_llama_cpp_adapter_init(llama_context, hey_llama_adapter);
+	hey_llm_t llm = hey_llama_cpp_adapter_init(llama_context, ctx_params, hey_llama_adapter);
 
 	hey = hey_create((hey_options_t){
 		.llm = llm,
