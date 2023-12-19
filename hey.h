@@ -684,25 +684,29 @@ hey_push_str(hey_exec_t* ctx, hey_str_t string, bool allow_special) {
 	if (num_tokens > 0) {
 		// Deal with the fact that sometimes the first token has a space
 		hey_str_t first_token_str = hey_detokenize(ctx, new_tokens[0]);
-		hey_index_t cmp_len = HEY_MIN(first_token_str.length, string.length);
-		if (
-			first_token_str.length > 0
-			&& first_token_str.chars[0] == ' '
-			&& HEY_STRNCMP(first_token_str.chars, string.chars, cmp_len) != 0
-		) {
-			// Search for the token that does not begin with space
-			for (
-				hey_token_t token = 0;
-				token < hey->options.llm.vocab_size;
-				++token
-			) {
-				hey_str_t token_str = hey_detokenize(ctx, token);
-				if (
-					token_str.length == first_token_str.length - 1
-					&& HEY_STRNCMP(token_str.chars, string.chars, token_str.length) == 0
+		if (first_token_str.length > 0 && first_token_str.chars[0] == ' ') {
+			// Find the actual length of the detokenized string
+			hey_index_t num_chars = 0;
+			for (hey_index_t i = 0; i < num_tokens; ++i) {
+				hey_str_t token_str = hey_detokenize(ctx, new_tokens[i]);
+				num_chars += token_str.length;
+			}
+			// If it is longer than the actual string
+			if (num_chars > string.length) {
+				// Search for the token that does not begin with space
+				for (
+					hey_token_t token = 0;
+					token < hey->options.llm.vocab_size;
+					++token
 				) {
-					new_tokens[0] = token;
-					break;
+					hey_str_t token_str = hey_detokenize(ctx, token);
+					if (
+						token_str.length == first_token_str.length - 1
+						&& HEY_STRNCMP(token_str.chars, string.chars, token_str.length) == 0
+					) {
+						new_tokens[0] = token;
+						break;
+					}
 				}
 			}
 		}
