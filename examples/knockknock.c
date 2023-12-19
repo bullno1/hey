@@ -1,6 +1,7 @@
 #define HEY_IMPLEMENTATION
 #define SOKOL_IMPL
-#include "hey.h"
+#include <hey_dsl.h>
+#include <hey.h>
 #include "common.h"
 #include <hey_suffix.h>
 
@@ -34,9 +35,8 @@ static void
 knockknock(hey_exec_t* ctx, void* userdata) {
 	(void)userdata;
 
-	hey_push_str(
-		ctx,
-		HEY_STR(
+	hey_dsl(ctx) {
+		h_lit_special(
 			"<s>### Instruction:\n"
 			"Write a conversation between two characters A and B. A tells B a hillarious knock knock joke.\n"
 			"\n"
@@ -44,39 +44,37 @@ knockknock(hey_exec_t* ctx, void* userdata) {
 			"A: Knock knock.\n"
 			"B: Who's there?\n"
 			"A: "
-		),
-		true
-	);
+		);
 
-	// Generate the setup
-	hey_var_t who;
-	hey_generate(ctx, (hey_generate_options_t){
-		.controller = { .fn = ends_at_punctuation },
-		.capture_into = &who,
-	});
+		// Generate the setup
+		hey_var_t who;
+		h_generate(
+			.controller = { .fn = ends_at_punctuation },
+			.capture_into = &who,
+		);
 
-	// Reformat the setup line so that it always end with an exclamation mark.
-	hey_str_t who_str = hey_get_var(ctx, who);
-	hey_push_str_fmt(
-		ctx, false,
-		"!\n"
-		"B: %.*s who?\n"
-		"A: ",
-		who_str.length, who_str.chars
-	);
+		// Reformat the setup line so that it always end with an exclamation mark.
+		hey_str_t who_str = hey_get_var(ctx, who);
+		h_fmt(
+			"!\n"
+			"B: %.*s who?\n"
+			"A: ",
+			who_str.length, who_str.chars
+		);
 
-	// Generate the punchline
-	hey_var_t punchline;
-	hey_generate(ctx, (hey_generate_options_t){
-		.controller = { .fn = ends_at_punctuation },
-		.capture_into = &punchline,
-	});
-	hey_str_t punchline_str = hey_get_var(ctx, punchline);
+		// Generate the punchline
+		hey_var_t punchline;
+		h_generate(
+			.controller = { .fn = ends_at_punctuation },
+			.capture_into = &punchline,
+		);
+		hey_str_t punchline_str = hey_get_var(ctx, punchline);
 
-	hey_term_put(stderr, ANSI_CODE_RESET);
-	fprintf(stderr, "\n------------\n");
-	fprintf(stderr, "Who: |%.*s|\n", who_str.length, who_str.chars);
-	fprintf(stderr, "Punchline: |%.*s|\n", punchline_str.length, punchline_str.chars);
+		hey_term_put(stderr, ANSI_CODE_RESET);
+		fprintf(stderr, "\n------------\n");
+		fprintf(stderr, "Who: |%.*s|\n", who_str.length, who_str.chars);
+		fprintf(stderr, "Punchline: |%.*s|\n", punchline_str.length, punchline_str.chars);
+	}
 }
 
 int

@@ -11,6 +11,16 @@ typedef struct hey_one_of_s {
 HEY_API hey_controller_t
 hey_one_of(hey_one_of_t* oneof);
 
+#ifdef HEY_DSL
+
+#define h_one_of(INDEX, ...) \
+	hey_one_of(&(hey_one_of_t){ \
+		.index = (INDEX), \
+		.controllers = HEY_ARRAY(hey_controller_t, __VA_ARGS__), \
+	})
+
+#endif
+
 #endif
 
 #if defined(HEY_IMPLEMENTATION) && !defined(HEY_ONE_OF_IMPLEMENTATION)
