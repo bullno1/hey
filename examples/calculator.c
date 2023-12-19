@@ -26,17 +26,16 @@ calculator(hey_exec_t* ctx, void* userdata) {
 	hey_dsl(ctx) {
 		while (true) {
 			// Stop at either beign_calc or final_answer
-			hey_index_t index;
 			h_generate(
 				.controller = h_one_of(
-					&index,
 					hey_ends_at_suffix(&begin_calc),
 					hey_ends_at_suffix(&final_answer),
 					hey_ends_at_token(llm->bos)
 				)
 			);
 
-			if (index == 0) { // Begin calc
+			hey_index_t stop_reason = h_one_of_reason();
+			if (stop_reason == 0) { // Begin calc
 				hey_var_t expr;
 				h_generate(
 					.controller = hey_ends_at_suffix(&end_calc),
@@ -68,7 +67,7 @@ calculator(hey_exec_t* ctx, void* userdata) {
 				} else {
 					hey_push_str_fmt(ctx, false, " = %f", result);
 				}
-			} else if (index == 1) { // Final answer
+			} else if (stop_reason == 1) { // Final answer
 				// The space before the final answer
 				h_lit(" ");
 				h_generate(
@@ -76,7 +75,7 @@ calculator(hey_exec_t* ctx, void* userdata) {
 					.capture_into = &answer,
 				);
 				break;
-			} else if (index == 2) { // Eos
+			} else if (stop_reason == 2) { // Eos
 				hey_term_put(stderr, ANSI_CODE_RESET);
 				fprintf(stderr, "\neos emitted before final answer!\n");
 				return;

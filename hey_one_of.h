@@ -13,11 +13,13 @@ hey_one_of(hey_one_of_t* oneof);
 
 #ifdef HEY_DSL
 
-#define h_one_of(INDEX, ...) \
+#define h_one_of(...) \
 	hey_one_of(&(hey_one_of_t){ \
-		.index = (INDEX), \
+		.index = &h_scope().last_index, \
 		.controllers = HEY_ARRAY(hey_controller_t, __VA_ARGS__), \
 	})
+
+#define h_one_of_reason() h_scope().last_index
 
 #endif
 
