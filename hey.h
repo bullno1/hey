@@ -846,10 +846,6 @@ hey_generate(hey_exec_t* ctx, hey_generate_options_t options) {
 		ctx->state.num_tokens -= 1;
 		ctx->sync_index = ctx->state.num_tokens;
 		ctx->state.num_chars = last_token_span.begin;
-
-		if (capture != NULL) {
-			capture->tokens.begin = ctx->state.num_tokens;
-		}
 	}
 
 	hey_logit_t* logits = hey->logits;
@@ -928,9 +924,14 @@ hey_generate(hey_exec_t* ctx, hey_generate_options_t options) {
 				chosen_token, tmp_str_buf, hey->max_token_len, llm->ctx
 			);
 			ctx->state.healing_prefix.chars += num_chars;
-			ctx->state.healing_prefix.length = HEY_MAX(
+			hey_index_t new_length = HEY_MAX(
 				ctx->state.healing_prefix.length - num_chars, 0
 			);
+			ctx->state.healing_prefix.length = new_length;
+
+			if (new_length == 0 && capture != NULL) {
+				capture->tokens.begin = ctx->state.num_tokens - 1;
+			}
 		}
 
 		hey_index_t count = 0;
