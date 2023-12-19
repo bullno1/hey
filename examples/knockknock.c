@@ -57,13 +57,11 @@ knockknock(hey_exec_t* ctx, void* userdata) {
 
 	// Reformat the setup line so that it always end with an exclamation mark.
 	hey_str_t who_str = hey_get_var(ctx, who);
-	hey_rewind(ctx, who.tokens.begin);
 	hey_push_str_fmt(
 		ctx, false,
-		"%.*s!\n"
+		"!\n"
 		"B: %.*s who?\n"
 		"A: ",
-		who_str.length, who_str.chars,
 		who_str.length, who_str.chars
 	);
 

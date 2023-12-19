@@ -356,7 +356,8 @@ struct hey_s {
 	hey_logit_t* logits;
 	char* text;
 	hey_span_t* token_spans;
-	char* tmp_str_buf;
+	char* tmp_fmt_buf;
+	char* tmp_detokenize_buf;
 
 	hey_arena_t arena;
 	hey_exec_t exec;
@@ -578,8 +579,11 @@ hey_create(hey_options_t options) {
 		.token_spans = HEY_ARRAY_ALLOC(
 			options->memctx, hey_span_t, options.llm.context_size
 		),
-		.tmp_str_buf = HEY_MALLOC(
+		.tmp_fmt_buf = HEY_MALLOC(
 			options->memctx, max_token_len * options.llm.context_size
+		),
+		.tmp_detokenize_buf = HEY_MALLOC(
+			options->memctx, max_token_len
 		),
 	};
 
@@ -592,7 +596,8 @@ void
 hey_destroy(hey_t* hey) {
 	hey_arena_cleanup(&hey->arena);
 
-	HEY_FREE(hey->options.memctx, hey->tmp_str_buf);
+	HEY_FREE(hey->options.memctx, hey->tmp_detokenize_buf);
+	HEY_FREE(hey->options.memctx, hey->tmp_fmt_buf);
 	HEY_FREE(hey->options.memctx, hey->token_spans);
 	HEY_FREE(hey->options.memctx, hey->text);
 	HEY_FREE(hey->options.memctx, hey->logits);
@@ -644,11 +649,11 @@ void
 hey_push_str_fmt(hey_exec_t* ctx, bool allow_special, const char* fmt, ...) {
 	hey_t* hey = ctx->owner;
 
-	char* tmp_str_buf = hey->tmp_str_buf;
+	char* tmp_buf = hey->tmp_fmt_buf;
 	size_t max_len = hey->max_token_len * hey->options.llm.context_size;
 	va_list args;
 	va_start(args, fmt);
-	hey_index_t len = HEY_VSNPRINTF(tmp_str_buf, max_len, fmt, args);
+	hey_index_t len = HEY_VSNPRINTF(tmp_buf, max_len, fmt, args);
 	va_end(args);
 	HEY_ASSERT(len >= 0, "Encoding error");
 	HEY_ASSERT(len < (hey_index_t)max_len, "Context overflow");
@@ -656,7 +661,7 @@ hey_push_str_fmt(hey_exec_t* ctx, bool allow_special, const char* fmt, ...) {
 	hey_push_str(
 		ctx,
 		(hey_str_t){
-			.chars = tmp_str_buf,
+			.chars = tmp_buf,
 			.length = len
 		},
 		allow_special
@@ -675,6 +680,33 @@ hey_push_str(hey_exec_t* ctx, hey_str_t string, bool allow_special) {
 		allow_special,
 		hey->options.llm.ctx
 	);
+
+	if (num_tokens > 0) {
+		// Deal with the fact that sometimes the first token has a space
+		hey_str_t first_token_str = hey_detokenize(ctx, new_tokens[0]);
+		hey_index_t cmp_len = HEY_MIN(first_token_str.length, string.length);
+		if (
+			first_token_str.length > 0
+			&& first_token_str.chars[0] == ' '
+			&& HEY_STRNCMP(first_token_str.chars, string.chars, cmp_len) != 0
+		) {
+			// Search for the token that does not begin with space
+			for (
+				hey_token_t token = 0;
+				token < hey->options.llm.vocab_size;
+				++token
+			) {
+				hey_str_t token_str = hey_detokenize(ctx, token);
+				if (
+					token_str.length == first_token_str.length - 1
+					&& HEY_STRNCMP(token_str.chars, string.chars, token_str.length) == 0
+				) {
+					new_tokens[0] = token;
+					break;
+				}
+			}
+		}
+	}
 
 	HEY_ASSERT(num_tokens <= num_tokens_left, "Context overflow");
 	ctx->state.num_tokens += num_tokens;
@@ -806,12 +838,12 @@ hey_detokenize(hey_exec_t* ctx, hey_token_t token) {
 	const hey_llm_t* llm = &hey->options.llm;
 	hey_index_t num_chars = llm->detokenize(
 		token,
-		hey->tmp_str_buf, hey->max_token_len,
+		hey->tmp_detokenize_buf, hey->max_token_len,
 		llm->ctx
 	);
 	HEY_ASSERT(num_chars <= hey->max_token_len, "Temp string buffer overflow");
 	return (hey_str_t){
-		.chars = hey->tmp_str_buf,
+		.chars = hey->tmp_detokenize_buf,
 		.length = num_chars,
 	};
 }
@@ -853,7 +885,7 @@ hey_generate(hey_exec_t* ctx, hey_generate_options_t options) {
 	hey_sampler_t sampler = ctx->sampler;
 	hey_watcher_t watcher = ctx->watcher;
 	hey_token_t vocab_size = llm->vocab_size;
-	char* tmp_str_buf = hey->tmp_str_buf;
+	char* tmp_buf = hey->tmp_detokenize_buf;
 
 	hey_control_decision_t decision;
 	do {
@@ -881,11 +913,11 @@ hey_generate(hey_exec_t* ctx, hey_generate_options_t options) {
 		if (ctx->state.healing_prefix.length > 0) {
 			for (hey_token_t token = 0; token < vocab_size; ++token) {
 				hey_index_t num_chars = llm->detokenize(
-					token, tmp_str_buf, hey->max_token_len, llm->ctx
+					token, tmp_buf, hey->max_token_len, llm->ctx
 				);
 
 				hey_index_t cmp_len = HEY_MIN(ctx->state.healing_prefix.length, num_chars);
-				if (HEY_STRNCMP(ctx->state.healing_prefix.chars, tmp_str_buf, cmp_len) != 0) {
+				if (HEY_STRNCMP(ctx->state.healing_prefix.chars, tmp_buf, cmp_len) != 0) {
 					logits[token] = HEY_LOGIT_IGNORE;
 				}
 			}
@@ -921,7 +953,7 @@ hey_generate(hey_exec_t* ctx, hey_generate_options_t options) {
 		// Reduce the healing prefix by the new token
 		if (ctx->state.healing_prefix.length > 0) {
 			hey_index_t num_chars = llm->detokenize(
-				chosen_token, tmp_str_buf, hey->max_token_len, llm->ctx
+				chosen_token, tmp_buf, hey->max_token_len, llm->ctx
 			);
 			ctx->state.healing_prefix.chars += num_chars;
 			hey_index_t new_length = HEY_MAX(
