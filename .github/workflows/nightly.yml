@@ -5,6 +5,8 @@ on:
     - cron: '0 0 * * *'
 jobs:
   build-windows:
+    permissions:
+      actions: write
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
