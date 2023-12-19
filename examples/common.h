@@ -14,6 +14,7 @@ typedef struct watcher_state_s {
 	double cpu_time;
 	uint64_t last_time;
 	bool processed_prompt;
+	bool capturing;
 	hey_index_t num_llm_tokens;
 } watcher_state_t;
 
@@ -33,6 +34,9 @@ watcher(const hey_event_t* event, hey_exec_t* ctx, void* userdata) {
 			if (event->new_tokens.source == HEY_SOURCE_USER) {
 				hey_term_put(stdout, ANSI_CODE_RESET);
 			} else {
+				if (watcher_state->capturing) {
+					hey_term_put(stdout, ANSI_CODE_UNDERLINE);
+				}
 				hey_term_put(stdout, ANSI_CODE_BLUE);
 			}
 
@@ -46,6 +50,12 @@ watcher(const hey_event_t* event, hey_exec_t* ctx, void* userdata) {
 					fflush(stdout);
 				}
 			}
+			break;
+		case HEY_EVENT_GENERATE_BEGIN:
+			watcher_state->capturing = event->generate.capture != NULL;
+			break;
+		case HEY_EVENT_GENERATE_END:
+			watcher_state->capturing = false;
 			break;
 		case HEY_EVENT_EVAL_BEGIN:
 		case HEY_EVENT_SAMPLING_BEGIN:

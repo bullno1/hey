@@ -120,6 +120,8 @@ typedef enum hey_control_decision_e {
 
 typedef enum hey_event_type_e {
 	HEY_EVENT_NEW_TOKENS,
+	HEY_EVENT_GENERATE_BEGIN,
+	HEY_EVENT_GENERATE_END,
 	HEY_EVENT_EVAL_BEGIN,
 	HEY_EVENT_EVAL_END,
 	HEY_EVENT_SAMPLING_BEGIN,
@@ -208,7 +210,7 @@ typedef struct hey_event_s {
 
 		struct {
 			hey_var_t* capture;
-		} eval;
+		} generate;
 
 		struct {
 			hey_index_t pos;
@@ -868,6 +870,16 @@ hey_generate(hey_exec_t* ctx, hey_generate_options_t options) {
 	const hey_llm_t* llm = &hey->options.llm;
 	hey_var_t* capture = options.capture_into;
 
+	hey_watcher_t watcher = ctx->watcher;
+	watcher.fn(
+		&(hey_event_t){
+			.type = HEY_EVENT_GENERATE_BEGIN,
+			.generate = { .capture = capture },
+		},
+		ctx,
+		watcher.userdata
+	);
+
 	if (capture != NULL) {
 		capture->text.begin = ctx->state.num_chars + ctx->state.healing_prefix.length;
 		capture->tokens.begin = ctx->state.num_tokens;
@@ -887,26 +899,19 @@ hey_generate(hey_exec_t* ctx, hey_generate_options_t options) {
 	hey_logit_t* logits = hey->logits;
 	hey_token_t* tokens = hey->tokens;
 	hey_sampler_t sampler = ctx->sampler;
-	hey_watcher_t watcher = ctx->watcher;
 	hey_token_t vocab_size = llm->vocab_size;
 	char* tmp_buf = hey->tmp_detokenize_buf;
 
 	hey_control_decision_t decision;
 	do {
 		watcher.fn(
-			&(hey_event_t){
-				.type = HEY_EVENT_EVAL_BEGIN,
-				.eval = { .capture = options.capture_into },
-			},
+			&(hey_event_t){ .type = HEY_EVENT_EVAL_BEGIN },
 			ctx,
 			watcher.userdata
 		);
 		llm->eval(tokens, ctx->state.num_tokens, logits, llm->ctx);
 		watcher.fn(
-			&(hey_event_t){
-				.type = HEY_EVENT_EVAL_END,
-				.eval = { .capture = options.capture_into },
-			},
+			&(hey_event_t){ .type = HEY_EVENT_EVAL_END },
 			ctx,
 			watcher.userdata
 		);
@@ -1012,6 +1017,15 @@ hey_generate(hey_exec_t* ctx, hey_generate_options_t options) {
 			} break;
 		}
 	} while(decision == HEY_CONTINUE);
+
+	watcher.fn(
+		&(hey_event_t){
+			.type = HEY_EVENT_GENERATE_END,
+			.generate = { .capture = capture },
+		},
+		ctx,
+		watcher.userdata
+	);
 }
 
 #endif
