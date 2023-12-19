@@ -69,6 +69,8 @@ calculator(hey_exec_t* ctx, void* userdata) {
 				hey_push_str_fmt(ctx, false, " = %f", result);
 			}
 		} else if (index == 1) { // Final answer
+			// The space before the final answer
+			hey_push_str(ctx, HEY_STR(" "), false);
 			hey_generate(ctx, (hey_generate_options_t){
 				.controller = hey_ends_at_token(llm->eos),
 				.capture_into = &answer,
