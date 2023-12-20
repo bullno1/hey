@@ -88,8 +88,10 @@ example_exec(hey_exec_t* ctx, void* userdata) {
 
 	input->fn(ctx, input);
 
-	const hey_state_t* hey_state = hey_get_state(ctx);
+	hey_term_put(stderr, ANSI_CODE_RESET);
 	fprintf(stderr, "\n------------\n");
+	const hey_state_t* hey_state = hey_get_state(ctx);
+#if 0
 	fprintf(stderr, "Cached text: |%.*s|\n", hey_state->num_chars, hey_state->text);
 	fprintf(stderr, "Actual text: |");
 	for (hey_index_t i = 0; i < hey_state->num_tokens; ++i) {
@@ -97,8 +99,10 @@ example_exec(hey_exec_t* ctx, void* userdata) {
 		fprintf(stderr, "%.*s", token_str.length, token_str.chars);
 	}
 	fprintf(stderr, "|\n");
+#endif
 
 	fprintf(stderr, "Prompt processing time: %fms\n", watcher_state.prompt_processing_time);
+	fprintf(stderr, "Num tokens: %d\n", hey_state->num_tokens);
 	fprintf(stderr, "Total gpu time: %fms\n", watcher_state.gpu_time);
 	fprintf(stderr, "Total cpu time: %fms\n", watcher_state.cpu_time);
 	fprintf(stderr, "Generation speed: %ft/s\n", (double)watcher_state.num_llm_tokens / watcher_state.gpu_time * 1000.0);

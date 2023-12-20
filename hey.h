@@ -5,7 +5,7 @@
 #	ifdef __cplusplus
 #		define HEY_API extern "C"
 #	else
-#		define HEY_API
+#		define HEY_API extern
 #	endif
 #endif
 
@@ -693,6 +693,10 @@ hey_push_str(hey_exec_t* ctx, hey_str_t string, bool allow_special) {
 				hey_str_t token_str = hey_detokenize(ctx, new_tokens[i]);
 				num_chars += token_str.length;
 			}
+			// TODO: This does not always work.
+			// If the string ends with a zero width special token such as </s>,
+			// It can end up being shorter.
+
 			// If it is longer than the actual string
 			if (num_chars > string.length) {
 				// Search for the token that does not begin with space

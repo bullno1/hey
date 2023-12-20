@@ -6,9 +6,14 @@
 HEY_API hey_index_t
 hey_choose(hey_exec_t* ctx, const hey_str_t options[]);
 
+#ifdef HEY_DSL
+#define	h_choose(...) hey_choose(h_ctx(), HEY_ARRAY(hey_str_t, __VA_ARGS__))
 #endif
 
-#ifdef HEY_IMPLEMENTATION
+#endif
+
+#if defined(HEY_IMPLEMENTATION) && !defined(HEY_CHOOSE_IMPLEMENTATION)
+#define HEY_CHOOSE_IMPLEMENTATION
 
 typedef struct hey_choose_state_s {
 	hey_index_t choice;
