@@ -1,2 +1,3 @@
 add_library(expr INTERFACE)
-target_include_directories(expr INTERFACE expr)
+# Suppress MSVC warning with SYSTEM
+target_include_directories(expr SYSTEM INTERFACE expr)
