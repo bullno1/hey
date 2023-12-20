@@ -14,12 +14,18 @@ scripting(hey_exec_t* ctx, void* userdata) {
 		{
 			.name = HEY_STR("spawn"),
 			.description = HEY_STR("Spawn an entity"),
-			.example_description = HEY_STR("Spawn an entity called 'monster'"),
+			.example_description = HEY_STR("Spawn an angry dagger wielding goblin called `goblin`"),
 			.args = HEY_ARRAY(hey_script_arg_def_t,
 				{
 					.name = HEY_STR("id"),
 					.description = HEY_STR("Unique id for this entity"),
-					.example = HEY_STR("monster"),
+					.example = HEY_STR("goblin"),
+					.parser = hey_script_string_parser,
+				},
+				{
+					.name = HEY_STR("description"),
+					.description = HEY_STR("A short description for this entity"),
+					.example = HEY_STR("It is a dagger wielding goblin."),
 					.parser = hey_script_string_parser,
 				}
 			),
@@ -27,7 +33,7 @@ scripting(hey_exec_t* ctx, void* userdata) {
 		{
 			.name = HEY_STR("dialog"),
 			.description = HEY_STR("Show a speech bubble"),
-			.example_description = HEY_STR("Make an entity called 'player' say 'Oh my god'"),
+			.example_description = HEY_STR("Make an entity called `player` say 'Oh my god'"),
 			.args = HEY_ARRAY(hey_script_arg_def_t,
 				{
 					.name = HEY_STR("entity_id"),
@@ -100,10 +106,23 @@ scripting(hey_exec_t* ctx, void* userdata) {
 		h_lit_special(
 			"<|user|>\n"
 			"Write a script for this scenario: "
-			"It was a stormy night. Bob is sound asleep.\nSuddenly he heard a noise. He wakes up and says 'What?'.\n"
-			"Dave arrive.\nHe says 'Hello'.</s>\n"
-			"<|assistant|>\n```\n"
+			"It was a stormy night. Bob is sound asleep.\nSuddenly he heard a noise. He wakes up and says 'Who's that?'.\n"
+			"It was his friend, Dave. Dave jumps out of the closet.\nHe says 'Hello'.</s>\n"
+			"<|assistant|>\n"
 		);
+		h_lit(
+			"Let's break down the scene into individual action before writing the script:\n"
+			"* First, we introduce the characters.\n"
+		);
+
+		const hey_llm_t* llm = hey_get_llm(ctx);
+		while (true) {
+			hey_index_t choice = h_choose(HEY_STR("*"), HEY_STR("```"));
+			if (choice == 1) { break; }
+			h_generate(.controller = hey_ends_at_token(llm->nl));
+		}
+		h_lit("\n");
+
 		hey_script_generate(
 			ctx,
 			(hey_script_receiver_t){ 0 },
