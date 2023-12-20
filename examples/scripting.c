@@ -50,6 +50,19 @@ scripting(hey_exec_t* ctx, void* userdata) {
 			),
 		},
 		{
+			.name = HEY_STR("sound"),
+			.description = HEY_STR("To play a sound effect"),
+			.example_description = HEY_STR("The clock is ticking."),
+			.args = HEY_ARRAY(hey_script_arg_def_t,
+				{
+					.name = HEY_STR("description"),
+					.description = HEY_STR("Description of the sound"),
+					.example = HEY_STR("Tik tok tik tok"),
+					.parser = hey_script_string_parser,
+				}
+			),
+		},
+		{
 			.name = HEY_STR("narration"),
 			.description = HEY_STR("For anything from the narrator's point of view that does not affect any game entity"),
 			.example_description = HEY_STR("It was a beautiful morning. The birds were chirping."),
