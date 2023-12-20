@@ -31,9 +31,8 @@ watcher(const hey_event_t* event, hey_exec_t* ctx, void* userdata) {
 			watcher_state->num_llm_tokens +=
 				event->new_tokens.source == HEY_SOURCE_LLM ? 1 : 0;
 
-			if (event->new_tokens.source == HEY_SOURCE_USER) {
-				hey_term_put(stdout, ANSI_CODE_RESET);
-			} else {
+			hey_term_put(stdout, ANSI_CODE_RESET);
+			if (event->new_tokens.source == HEY_SOURCE_LLM) {
 				if (watcher_state->capturing) {
 					hey_term_put(stdout, ANSI_CODE_UNDERLINE);
 				}
