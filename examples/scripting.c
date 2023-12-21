@@ -8,17 +8,17 @@
 
 static void
 scripting(hey_exec_t* ctx, void* userdata) {
-	(void)userdata;
+	const exec_input_t* input = userdata;
 
 	hey_script_action_def_t* actions = HEY_ARRAY(hey_script_action_def_t,
 		{
-			.name = HEY_STR("spawn"),
-			.description = HEY_STR("Spawn an entity"),
+			.name = HEY_STR("spawn_character"),
+			.description = HEY_STR("Spawn a character"),
 			.example_description = HEY_STR("Spawn an angry dagger wielding goblin called `goblin`"),
 			.args = HEY_ARRAY(hey_script_arg_def_t,
 				{
 					.name = HEY_STR("id"),
-					.description = HEY_STR("Unique id for this entity"),
+					.description = HEY_STR("Unique id for this character"),
 					.example = HEY_STR("goblin"),
 					.parser = hey_script_string_parser,
 				},
@@ -26,6 +26,25 @@ scripting(hey_exec_t* ctx, void* userdata) {
 					.name = HEY_STR("description"),
 					.description = HEY_STR("A short description for this entity"),
 					.example = HEY_STR("It is a dagger wielding goblin."),
+					.parser = hey_script_string_parser,
+				}
+			),
+		},
+		{
+			.name = HEY_STR("spawn_object"),
+			.description = HEY_STR("Spawn an object"),
+			.example_description = HEY_STR("Spawn a shiny dagger lying on the ground called `dagger`"),
+			.args = HEY_ARRAY(hey_script_arg_def_t,
+				{
+					.name = HEY_STR("id"),
+					.description = HEY_STR("Unique id for this object"),
+					.example = HEY_STR("dagger"),
+					.parser = hey_script_string_parser,
+				},
+				{
+					.name = HEY_STR("description"),
+					.description = HEY_STR("A short description for this object"),
+					.example = HEY_STR("The dagger is shining."),
 					.parser = hey_script_string_parser,
 				}
 			),
@@ -80,7 +99,7 @@ scripting(hey_exec_t* ctx, void* userdata) {
 	hey_dsl(ctx) {
 		h_lit_special(
 			"<s><|system|>\n"
-			"You are a game developer. Your job is to write cut scene scripts in YAML. You have access to the following primitives:\n\n"
+			"You are an expert in scripting. You assist the user in writing in a scripting language based on YAML. You have access to the following primitives:\n\n"
 		);
 
 		for (hey_index_t i = 0; actions[i].name.chars != NULL; ++i) {
@@ -116,12 +135,11 @@ scripting(hey_exec_t* ctx, void* userdata) {
 			h_lit("```");
 			h_lit_special("</s>\n");
 		}
-		h_lit_special(
+		h_fmt_special(
 			"<|user|>\n"
-			"Write a script for this scenario: "
-			"It was a stormy night. Bob is sound asleep.\nSuddenly he heard a noise. He wakes up and says 'Who's that?'.\n"
-			"It was his friend, Dave. Dave jumps out of the closet.\nHe says 'Hello'.</s>\n"
-			"<|assistant|>\n"
+			"Write a script for this scenario: %.*s</s>\n"
+			"<|assistant|>\n",
+			input->input_string.length, input->input_string.chars
 		);
 		h_lit(
 			"Let's break down the scene into individual action before writing the script:\n"
@@ -130,6 +148,8 @@ scripting(hey_exec_t* ctx, void* userdata) {
 
 		const hey_llm_t* llm = hey_get_llm(ctx);
 		while (true) {
+			// TODO: To ensure that eventually the brain storming must end,
+			// gradually boost the strength of ```
 			hey_index_t choice = h_choose(HEY_STR("*"), HEY_STR("```"));
 			if (choice == 1) { break; }
 			h_generate(.controller = hey_ends_at_token(llm->nl));
