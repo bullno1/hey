@@ -21,7 +21,7 @@ calculator(hey_exec_t* ctx, void* userdata) {
 	hey_str_t end_calc = HEY_STR(">>");
 	hey_str_t final_answer = HEY_STR("===");
 
-	hey_var_t answer;
+	hey_var_t answer = { 0 };
 
 	hey_dsl(ctx) {
 		while (true) {

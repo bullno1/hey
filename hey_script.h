@@ -135,13 +135,9 @@ hey_script_generate(
 		++num_actions
 	) {
 		const hey_script_action_def_t* action = &actions[num_actions];
-		hey_index_t num_args;
-		for (
-			num_args = 0;
-			action->args[num_args].name.chars != NULL;
-			++num_args
-		) {
-			break;
+		hey_index_t num_args = 0;
+		while (action->args[num_args].name.chars != NULL) {
+			++num_args;
 		}
 
 		max_num_args = HEY_MAX(max_num_args, num_args);
