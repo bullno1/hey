@@ -146,6 +146,7 @@ scripting(hey_exec_t* ctx, void* userdata) {
 			"* First, we introduce the characters.\n"
 		);
 
+		// Generate step-by-step plan until the model decides to start scripting
 		const hey_llm_t* llm = hey_get_llm(ctx);
 		while (true) {
 			// TODO: To ensure that eventually the brain storming must end,

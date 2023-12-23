@@ -48,7 +48,11 @@ hey_choose_controller(hey_index_t* count, hey_exec_t* ctx, void* userdata) {
 }
 
 HEY_PRIVATE void
-hey_choose_logit_processor(hey_logit_t* logits, hey_token_t num_logits, hey_exec_t* ctx, void* userdata) {
+hey_choose_logit_processor(
+	hey_logit_t* logits, hey_token_t num_logits,
+	hey_exec_t* ctx,
+	void* userdata
+) {
 	hey_choose_state_t* choose_state = userdata;
 	const hey_state_t* hey_state = hey_get_state(ctx);
 
@@ -67,21 +71,15 @@ hey_choose_logit_processor(hey_logit_t* logits, hey_token_t num_logits, hey_exec
 		for (hey_index_t i = 0; choose_state->options[i].chars != NULL; ++i) {
 			hey_str_t option = choose_state->options[i];
 
-			if (
-				hey_state->num_chars + token_str.length >
-				choose_state->placement_offset + option.length
-			) {
-				continue;
-			}
-
 			// It's safe to modify since this is a copy
 			if (hey_state->num_chars > choose_state->placement_offset) {
 				option.chars += hey_state->num_chars - choose_state->placement_offset;
 				option.length -= hey_state->num_chars - choose_state->placement_offset;
+
+				if (option.length <= 0) { continue; }
 			}
 
 			hey_index_t cmp_len = HEY_MIN(option.length, token_str.length);
-
 			if (HEY_STRNCMP(option.chars, token_str.chars, cmp_len) == 0) {
 				matched = true;
 				break;
