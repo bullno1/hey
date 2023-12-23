@@ -904,10 +904,12 @@ hey_generate(hey_exec_t* ctx, hey_generate_options_t options) {
 	hey_token_t* tokens = hey->tokens;
 	hey_sampler_t sampler = ctx->sampler;
 	hey_token_t vocab_size = llm->vocab_size;
-	char* tmp_buf = hey->tmp_detokenize_buf;
+	char* tmp_detokenize_buf = hey->tmp_detokenize_buf;
 
 	hey_control_decision_t decision;
 	do {
+		HEY_ASSERT(ctx->state.num_tokens < llm->context_size, "Context overflow");
+
 		watcher.fn(
 			&(hey_event_t){ .type = HEY_EVENT_EVAL_BEGIN },
 			ctx,
@@ -922,20 +924,25 @@ hey_generate(hey_exec_t* ctx, hey_generate_options_t options) {
 
 		watcher.fn(&(hey_event_t){ .type = HEY_EVENT_SAMPLING_BEGIN }, ctx, watcher.userdata);
 
-		// Filter tokens for healing
+		// Only accept tokens that have the same prefix
 		if (ctx->state.healing_prefix.length > 0) {
 			for (hey_token_t token = 0; token < vocab_size; ++token) {
 				hey_index_t num_chars = llm->detokenize(
-					token, tmp_buf, hey->max_token_len, llm->ctx
+					token, tmp_detokenize_buf, hey->max_token_len, llm->ctx
 				);
 
 				hey_index_t cmp_len = HEY_MIN(ctx->state.healing_prefix.length, num_chars);
-				if (HEY_STRNCMP(ctx->state.healing_prefix.chars, tmp_buf, cmp_len) != 0) {
+				if (
+					HEY_STRNCMP(
+						ctx->state.healing_prefix.chars,
+						tmp_detokenize_buf,
+						cmp_len
+					) != 0
+				) {
 					logits[token] = HEY_LOGIT_IGNORE;
 				}
 			}
 		}
-		hey_index_t healing_offset = ctx->state.healing_prefix.length;
 
 		// Generation processor
 		options.logit_processor.fn(logits, vocab_size, ctx, options.logit_processor.userdata);
@@ -946,7 +953,6 @@ hey_generate(hey_exec_t* ctx, hey_generate_options_t options) {
 		hey_token_t chosen_token = sampler.fn(logits, vocab_size, ctx, sampler.userdata);
 		watcher.fn(&(hey_event_t){ .type = HEY_EVENT_SAMPLING_END }, ctx, watcher.userdata);
 
-		HEY_ASSERT(ctx->state.num_tokens < llm->context_size, "Context overflow");
 		tokens[ctx->state.num_tokens] = chosen_token;
 		ctx->state.num_tokens += 1;
 		watcher.fn(
@@ -956,7 +962,7 @@ hey_generate(hey_exec_t* ctx, hey_generate_options_t options) {
 					.tokens = &chosen_token,
 					.num_tokens = 1,
 					.source = HEY_SOURCE_LLM,
-					.healing_offset = healing_offset,
+					.healing_offset = ctx->state.healing_prefix.length,
 				},
 			},
 			ctx,
@@ -966,7 +972,7 @@ hey_generate(hey_exec_t* ctx, hey_generate_options_t options) {
 		// Reduce the healing prefix by the new token
 		if (ctx->state.healing_prefix.length > 0) {
 			hey_index_t num_chars = llm->detokenize(
-				chosen_token, tmp_buf, hey->max_token_len, llm->ctx
+				chosen_token, tmp_detokenize_buf, hey->max_token_len, llm->ctx
 			);
 			ctx->state.healing_prefix.chars += num_chars;
 			hey_index_t new_length = HEY_MAX(
@@ -974,6 +980,7 @@ hey_generate(hey_exec_t* ctx, hey_generate_options_t options) {
 			);
 			ctx->state.healing_prefix.length = new_length;
 
+			// When healing prefix is reduced to 0, we are in the capture region
 			if (new_length == 0 && capture != NULL) {
 				capture->tokens.begin = ctx->state.num_tokens - 1;
 			}
@@ -1020,7 +1027,7 @@ hey_generate(hey_exec_t* ctx, hey_generate_options_t options) {
 				}
 			} break;
 		}
-	} while(decision == HEY_CONTINUE);
+	} while (decision == HEY_CONTINUE);
 
 	watcher.fn(
 		&(hey_event_t){
