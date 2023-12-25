@@ -19,7 +19,7 @@ jobs:
         with:
           hours: 24
       - name: Trigger windows build
-        if: steps.commitswithintime.outputs.has-new-commits-within-time
+        if: ${{ steps.commitswithintime.outputs.has-new-commits-within-time }}
         uses: benc-uk/workflow-dispatch@v1
         with:
           workflow: Windows build
