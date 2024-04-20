@@ -32,7 +32,8 @@ typedef struct hey_repetition_penalty_state_s {
 	hey_index_t* hash_values;
 } hey_repetition_penalty_state_t;
 
-#ifdef _MSVC
+#ifdef _MSC_VER
+
 #include <intrin.h>
 
 HEY_PRIVATE uint32_t
@@ -41,7 +42,9 @@ hey_ilog2(uint32_t x) {
 	_BitScanReverse(&result, x);
 	return result;
 }
+
 #else
+
 #include <limits.h>
 
 HEY_PRIVATE uint32_t
@@ -119,9 +122,9 @@ hey_repetition_penalty_logit_processor(
 
 	hey_index_t previous_num_tokens = state->previous_num_tokens;
 	hey_index_t current_num_tokens = hey_state->num_tokens;
-	if (current_num_tokens < previous_num_tokens) {
+	if (current_num_tokens <= previous_num_tokens) {
 		// Some rewinding happened, just start from the beginning
-		previous_num_tokens = 0;
+		previous_num_tokens = HEY_MIN(0, current_num_tokens - state->size);
 		hey_ring_buf_reset(state);
 	}
 
