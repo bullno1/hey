@@ -1,6 +1,6 @@
 [submodule "deps/llama.cpp"]
 	path = deps/llama.cpp
-	url = https://github.com/bullno1/llama.cpp.git
+	url = https://github.com/ggerganov/llama.cpp.git
 	branch = windows-static-cudart
 [submodule "deps/argparse"]
 	path = deps/argparse
