@@ -171,7 +171,7 @@ example_main(int argc, const char* argv[], hey_fn_t fn) {
 
 	struct llama_context_params ctx_params = llama_context_default_params();
 	ctx_params.n_ctx = 0;
-	llama_backend_init(false);
+	llama_backend_init();
 	llama_context = llama_new_context_with_model(model, ctx_params);
 
 	size_t adapter_size = hey_llama_cpp_adapter_size(llama_context);
@@ -197,7 +197,7 @@ example_main(int argc, const char* argv[], hey_fn_t fn) {
 	int ctx_size = llm.context_size;
 	int max_token_len = 0;
 	for (llama_token i = 0; i < vocab_size; ++i) {
-		int token_len = -llama_token_to_piece(model, i, NULL, 0);
+		int token_len = -llama_token_to_piece(model, i, NULL, 0, true);
 		max_token_len = token_len > max_token_len ? token_len : max_token_len;
 	}
 	str_buf = malloc(max_token_len * ctx_size);

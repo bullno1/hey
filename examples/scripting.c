@@ -148,14 +148,21 @@ scripting(hey_exec_t* ctx, void* userdata) {
 
 		// Generate step-by-step plan until the model decides to start scripting
 		const hey_llm_t* llm = hey_get_llm(ctx);
+		bool fence_generated = false;
 		while (true) {
 			// TODO: To ensure that eventually the brain storming must end,
 			// gradually boost the strength of ```
-			hey_index_t choice = h_choose(HEY_STR("*"), HEY_STR("```"));
-			if (choice == 1) { break; }
+			hey_index_t choice = h_choose(HEY_STR("*"), HEY_STR("```"), HEY_STR("\n"));
+			if (choice != 0) { break; }
+			fence_generated = choice == 1;
+
 			h_generate(.controller = hey_ends_at_token(llm->nl));
 		}
-		h_lit("\n");
+		if (fence_generated) {
+			h_lit("\n");
+		} else {
+			h_lit("```\n");
+		}
 
 		hey_script_generate(
 			ctx,

@@ -13,7 +13,7 @@ main(int argc, const char* argv[]) {
 	int allow_special = false;
 	int exit_code = EXIT_SUCCESS;
 
-	llama_backend_init(false);
+	llama_backend_init();
 
 	struct argparse_option options[] = {
 		OPT_HELP(),
@@ -80,7 +80,7 @@ main(int argc, const char* argv[]) {
 	int ctx_size = llama_n_ctx_train(model);
 	int max_token_len = 0;
 	for (llama_token i = 0; i < vocab_size; ++i) {
-		int token_len = -llama_token_to_piece(model, i, NULL, 0);
+		int token_len = -llama_token_to_piece(model, i, NULL, 0, false);
 		max_token_len = token_len > max_token_len ? token_len : max_token_len;
 	}
 	str_buf = malloc(max_token_len * ctx_size);
@@ -103,7 +103,7 @@ main(int argc, const char* argv[]) {
 	);
 
 	for (int i = 0; i < num_tokens; ++i) {
-		int str_len = llama_token_to_piece(model, token_buf[i], tmp_buf, max_token_len);
+		int str_len = llama_token_to_piece(model, token_buf[i], tmp_buf, max_token_len, false);
 		printf("%d: |%.*s|\n", token_buf[i], str_len, tmp_buf);
 	}
 
