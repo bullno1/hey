@@ -16,7 +16,7 @@ hey_make_mirostat_sampler(
 
 #ifdef HEY_IMPLEMENTATION
 
-typedef struct hey_mirostat_sampler_state_s {
+typedef struct {
 	hey_rand_state_t* rand_state;
 	hey_logit_t tau;
 	hey_logit_t eta;

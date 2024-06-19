@@ -111,14 +111,14 @@ typedef HEY_TOKEN_TYPE hey_token_t;
 typedef HEY_INDEX_TYPE hey_index_t;
 typedef HEY_LOGIT_TYPE hey_logit_t;
 
-typedef enum hey_control_decision_e {
+typedef enum {
 	HEY_CONTINUE,
 	HEY_STOP,
 	HEY_STOP_AND_RETRACT_TOKENS = HEY_STOP,
 	HEY_STOP_AND_RETRACT_CHARACTERS,
 } hey_control_decision_t;
 
-typedef enum hey_event_type_e {
+typedef enum {
 	HEY_EVENT_NEW_TOKENS,
 	HEY_EVENT_GENERATE_BEGIN,
 	HEY_EVENT_GENERATE_END,
@@ -129,14 +129,14 @@ typedef enum hey_event_type_e {
 	HEY_EVENT_REWIND,
 } hey_event_type_t;
 
-typedef enum hey_text_source_e {
+typedef enum {
 	HEY_SOURCE_USER,
 	HEY_SOURCE_LLM,
 } hey_text_source_t;
 
 typedef void(*hey_fn_t)(hey_exec_t* ctx, void* userdata);
 
-typedef struct hey_llm_s {
+typedef struct {
 	void* ctx;
 	hey_token_t vocab_size;
 	hey_index_t context_size;
@@ -165,22 +165,22 @@ typedef struct hey_llm_s {
 	);
 } hey_llm_t;
 
-typedef struct hey_options_s {
+typedef struct {
 	void* memctx;
 	hey_llm_t llm;
 } hey_options_t;
 
-typedef struct hey_span_s {
+typedef struct {
 	hey_index_t begin;
 	hey_index_t end;
 } hey_span_t;
 
-typedef struct hey_str_t {
+typedef struct {
 	hey_index_t length;
 	const char* chars;
 } hey_str_t;
 
-typedef struct hey_state_s {
+typedef struct {
 	hey_str_t healing_prefix;
 
 	hey_index_t num_tokens;
@@ -191,13 +191,13 @@ typedef struct hey_state_s {
 	const char* text;
 } hey_state_t;
 
-typedef struct hey_var_s {
+typedef struct {
 	const char* name;
 	hey_span_t tokens;
 	hey_span_t text;
 } hey_var_t;
 
-typedef struct hey_event_s {
+typedef struct {
 	hey_event_type_t type;
 
 	union {
@@ -218,7 +218,7 @@ typedef struct hey_event_s {
 	};
 } hey_event_t;
 
-typedef struct hey_logit_processor_s {
+typedef struct {
 	void (*fn)(
 		hey_logit_t* logits, hey_token_t num_logits,
 		hey_exec_t* ctx,
@@ -228,7 +228,7 @@ typedef struct hey_logit_processor_s {
 	void* userdata;
 } hey_logit_processor_t;
 
-typedef struct hey_sampler_s {
+typedef struct {
 	hey_token_t (*fn)(
 		const hey_logit_t* logits, hey_token_t num_logits,
 		hey_exec_t* ctx,
@@ -238,18 +238,18 @@ typedef struct hey_sampler_s {
 	void* userdata;
 } hey_sampler_t;
 
-typedef struct hey_controller_s {
+typedef struct {
 	hey_control_decision_t (*fn)(hey_index_t* count, hey_exec_t* ctx, void* userdata);
 
 	void* userdata;
 } hey_controller_t;
 
-typedef struct hey_watcher_s {
+typedef struct {
 	void (*fn)(const hey_event_t* event, hey_exec_t* ctx, void* userdata);
 	void* userdata;
 } hey_watcher_t;
 
-typedef struct hey_generate_options_s {
+typedef struct {
 	hey_logit_processor_t logit_processor;
 	hey_controller_t controller;
 	hey_var_t* capture_into;
@@ -335,7 +335,7 @@ typedef struct hey_arena_chunk_s {
 	char begin[];
 } hey_arena_chunk_t;
 
-typedef struct hey_arena_s {
+typedef struct {
 	size_t chunk_size;
 	hey_arena_chunk_t* current_chunk;
 	hey_arena_chunk_t* free_chunks;

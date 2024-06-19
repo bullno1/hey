@@ -23,7 +23,7 @@ hey_llama_cpp_adapter_init(
 
 #include <llama.h>
 
-typedef struct hey_llama_cpp_adapter_s {
+typedef struct {
 	struct llama_context* context;
 	hey_index_t num_tokens;
 	hey_index_t batch_size;

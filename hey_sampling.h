@@ -30,7 +30,7 @@ hey_make_random_sampler(hey_exec_t* ctx, hey_rand_state_t* rand_state);
 
 #include <tgmath.h>
 
-typedef struct hey_random_sampler_state_s {
+typedef struct {
 	hey_rand_state_t* rand_state;
 	hey_logit_t softmax[];
 } hey_random_sampler_state_t;

@@ -19,7 +19,7 @@ hey_make_repetition_penalty_logit_processor(
 #define HEY_TOKEN_INVALID (-1)
 #define HEY_TOKEN_DELETED (-2)
 
-typedef struct hey_repetition_penalty_state_s {
+typedef struct {
 	hey_index_t size;
 	hey_index_t hash_exp;
 	hey_index_t previous_num_tokens;

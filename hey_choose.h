@@ -15,7 +15,7 @@ hey_choose(hey_exec_t* ctx, const hey_str_t options[]);
 #if defined(HEY_IMPLEMENTATION) && !defined(HEY_CHOOSE_IMPLEMENTATION)
 #define HEY_CHOOSE_IMPLEMENTATION
 
-typedef struct hey_choose_state_s {
+typedef struct {
 	hey_index_t choice;
 	hey_index_t placement_offset;
 	const hey_str_t* options;

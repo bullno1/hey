@@ -5,32 +5,32 @@
 #include "hey_choose.h"
 #include "hey_suffix.h"
 
-typedef struct hey_script_arg_parser_s {
+typedef struct {
 	hey_str_t (*fn)(hey_exec_t* ctx, void* userdata);
 	void* userdata;
 } hey_script_arg_parser_t;
 
-typedef struct hey_script_step_s {
-	hey_str_t description;
-	const struct hey_script_action_def_s* action;
-	hey_str_t* args;
-} hey_script_step_t;
-
-typedef struct hey_script_arg_def_s {
+typedef struct {
 	hey_str_t name;
 	hey_str_t description;
 	hey_str_t example;
 	hey_script_arg_parser_t parser;
 } hey_script_arg_def_t;
 
-typedef struct hey_script_action_def_s {
+typedef struct {
 	hey_str_t name;
 	hey_str_t description;
 	const hey_script_arg_def_t* args;
 	hey_str_t example_description;
 } hey_script_action_def_t;
 
-typedef struct hey_script_receiver_s {
+typedef struct {
+	hey_str_t description;
+	const hey_script_action_def_t* action;
+	hey_str_t* args;
+} hey_script_step_t;
+
+typedef struct {
 	void (*fn)(const hey_script_step_t* step, void* userdata);
 	void* userdata;
 } hey_script_receiver_t;

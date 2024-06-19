@@ -3,7 +3,7 @@
 
 #include "hey.h"
 
-typedef struct hey_one_of_s {
+typedef struct {
 	hey_index_t* index;
 	const hey_controller_t* controllers;
 } hey_one_of_t;

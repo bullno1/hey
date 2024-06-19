@@ -8,7 +8,7 @@
 #include <argparse.h>
 #include "termcolor.h"
 
-typedef struct watcher_state_s {
+typedef struct {
 	double prompt_processing_time;
 	double gpu_time;
 	double cpu_time;
@@ -18,7 +18,7 @@ typedef struct watcher_state_s {
 	hey_index_t num_llm_tokens;
 } watcher_state_t;
 
-typedef struct exec_input_s {
+typedef struct {
 	hey_fn_t fn;
 	hey_str_t input_string;
 } exec_input_t;
@@ -79,7 +79,7 @@ watcher(const hey_event_t* event, hey_exec_t* ctx, void* userdata) {
 static inline void
 example_exec(hey_exec_t* ctx, void* userdata) {
 	exec_input_t* input = userdata;
-	struct watcher_state_s watcher_state = { 0 };
+	watcher_state_t watcher_state = { 0 };
 	hey_set_watcher(ctx, (hey_watcher_t){
 		.fn = watcher,
 		.userdata = &watcher_state
