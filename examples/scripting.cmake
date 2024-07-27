@@ -5,5 +5,6 @@ target_link_libraries(
 	hey
 	llama
 	sokol
+	${MATH_LIB}
 )
 set_target_properties(hey_scripting PROPERTIES OUTPUT_NAME "scripting")

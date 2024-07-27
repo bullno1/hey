@@ -197,7 +197,7 @@ example_main(int argc, const char* argv[], hey_fn_t fn) {
 	int ctx_size = llm.context_size;
 	int max_token_len = 0;
 	for (llama_token i = 0; i < vocab_size; ++i) {
-		int token_len = -llama_token_to_piece(model, i, NULL, 0, true);
+		int token_len = -llama_token_to_piece(model, i, NULL, 0, 0, true);
 		max_token_len = token_len > max_token_len ? token_len : max_token_len;
 	}
 	str_buf = malloc(max_token_len * ctx_size);

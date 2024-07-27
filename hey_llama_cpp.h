@@ -62,6 +62,7 @@ hey_llama_cpp_detokenize(
 	hey_index_t num_chars_out = llama_token_to_piece(
 		model, token,
 		text, num_chars,
+		0,
 		false
 	);
 

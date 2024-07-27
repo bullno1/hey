@@ -6,5 +6,6 @@ target_link_libraries(
 	llama
 	sokol
 	expr
+	${MATH_LIB}
 )
 set_target_properties(hey_calculator PROPERTIES OUTPUT_NAME "calculator")

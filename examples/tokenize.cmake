@@ -4,5 +4,6 @@ target_link_libraries(
 	argparse
 	hey
 	llama
+	${MATH_LIB}
 )
 set_target_properties(hey_tokenize PROPERTIES OUTPUT_NAME "tokenize")

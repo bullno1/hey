@@ -55,4 +55,11 @@ endif()
 add_library(hey INTERFACE)
 target_include_directories(hey INTERFACE .)
 
+set(MATH_LIB "")
+include(CheckLibraryExists)
+check_library_exists(m expf "" LIBM)
+if(LIBM)
+	list(APPEND MATH_LIB "m")
+endif()
+
 add_subdirectory(examples)
