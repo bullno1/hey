@@ -41,7 +41,7 @@ hey_llama_cpp_tokenize(
 	const struct llama_model* model = llama_get_model(adapter->context);
 
 	hey_index_t num_tokens_out = llama_tokenize(
-		model, text, num_chars,
+		llama_model_get_vocab(model), text, num_chars,
 		tokens, num_tokens,
 		false,
 		allow_special
@@ -60,7 +60,7 @@ hey_llama_cpp_detokenize(
 	const struct llama_model* model = llama_get_model(adapter->context);
 
 	hey_index_t num_chars_out = llama_token_to_piece(
-		model, token,
+		llama_model_get_vocab(model), token,
 		text, num_chars,
 		0,
 		false
@@ -108,13 +108,15 @@ hey_llama_cpp_eval(
 		);
 		llama_decode(
 			adapter->context,
-			llama_batch_get_one(tokens + n_past, n_eval, n_past, 0)
+			llama_batch_get_one(tokens + n_past, n_eval)
 		);
 		n_past += n_eval;
 		num_tokens_left -= n_eval;
 	}
 
-	hey_index_t vocab_size = llama_n_vocab(llama_get_model(adapter->context));
+	hey_index_t vocab_size = llama_vocab_n_tokens(
+		llama_model_get_vocab(llama_get_model(adapter->context))
+	);
 	HEY_MEMCPY(
 		logits,
 		llama_get_logits(adapter->context),
@@ -146,13 +148,14 @@ hey_llama_cpp_adapter_init(
 		.batch_size = params.n_batch,
 	};
 
+	const struct llama_vocab* vocab = llama_model_get_vocab(model);
 	return (hey_llm_t){
 		.ctx = adapter,
-		.vocab_size = llama_n_vocab(model),
-		.context_size = llama_n_ctx_train(model),
-		.bos = llama_token_bos(model),
-		.eos = llama_token_eos(model),
-		.nl = llama_token_nl(model),
+		.vocab_size = llama_vocab_n_tokens(vocab),
+		.context_size = llama_model_n_ctx_train(model),
+		.bos = llama_vocab_bos(vocab),
+		.eos = llama_vocab_eos(vocab),
+		.nl = llama_vocab_nl(vocab),
 		.tokenize = hey_llama_cpp_tokenize,
 		.detokenize = hey_llama_cpp_detokenize,
 		.eval = hey_llama_cpp_eval,
